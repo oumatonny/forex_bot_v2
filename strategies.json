@@ -1,0 +1,276 @@
+{
+  "strategies": [
+    {
+      "id": 1,
+      "name": "Forex Trend Trading Strategy",
+      "category": "Technical Analysis",
+      "description": "Trading in the direction of the prevailing market trend. Trends are classified as uptrend, downtrend, or sideways. The strategy involves buying in an uptrend, selling in a downtrend, and staying out in a sideways market.",
+      "indicators": ["Trend lines", "Price action (highs and lows)"],
+      "source": "STRATEGIES.txt"
+    },
+    {
+      "id": 2,
+      "name": "Support and Resistance Trading Strategy",
+      "category": "Technical Analysis",
+      "description": "Identifying horizontal price levels where buying interest (support) or selling pressure (resistance) is strong. Buy at support, sell at resistance. A breakout above resistance or below support signals a potential trend change.",
+      "indicators": ["Horizontal trendlines", "Previous peaks and troughs"],
+      "source": "STRATEGIES.txt"
+    },
+    {
+      "id": 3,
+      "name": "Forex Range Trading Strategy",
+      "category": "Technical Analysis",
+      "description": "Also called channel trading. Used in the absence of a trend. Identify the trading range by connecting highs and lows with horizontal trendlines. Buy at support, sell at resistance, and use stop and limit orders to manage risk.",
+      "indicators": ["Support and resistance levels", "Channel lines"],
+      "source": "STRATEGIES.txt"
+    },
+    {
+      "id": 4,
+      "name": "Technical Indicators in Forex Trading Strategies",
+      "category": "Technical Analysis",
+      "description": "Using calculations based on price and volume to confirm trends and generate buy/sell signals. Common indicators include Moving Average, Bollinger Bands, RSI, Stochastic Oscillator, MACD, RSI-Bars, ADX, and Momentum. Signals are generated via crossovers and divergence.",
+      "indicators": ["Moving Average", "Bollinger Bands", "RSI", "Stochastic Oscillator", "MACD", "RSI-Bars", "ADX", "Momentum"],
+      "source": "STRATEGIES.txt"
+    },
+    {
+      "id": 5,
+      "name": "Forex Charts Trading Strategies",
+      "category": "Technical Analysis",
+      "description": "Using chart types (bar, line, candlestick, point and figure) and chart patterns (Triangles, Flags, Pennants, Wedge, Rectangle, Head and Shoulders, Double Tops/Bottoms, Triple Tops/Bottoms) to develop trading strategies.",
+      "indicators": ["Chart patterns"],
+      "source": "STRATEGIES.txt"
+    },
+    {
+      "id": 6,
+      "name": "Forex Volume Trading Strategy",
+      "category": "Technical Analysis",
+      "description": "Analyzing trading volume to confirm price movements. High volume accompanies significant price moves. Decreasing volume during an uptrend signals a potential end of the trend.",
+      "indicators": ["Volume bars"],
+      "source": "STRATEGIES.txt"
+    },
+    {
+      "id": 7,
+      "name": "Multiple Time Frame Analysis Strategy",
+      "category": "Technical Analysis",
+      "description": "Analyzing the same security across different time frames (e.g., monthly, weekly, daily, 5-minute) to determine the overall market trend and identify trading opportunities. Start with higher time frames to identify direction, then use lower time frames for entry.",
+      "indicators": ["Charts on multiple time frames"],
+      "source": "STRATEGIES.txt"
+    },
+    {
+      "id": 8,
+      "name": "Forex Scalping Strategy",
+      "category": "Trading Style - Day Trading",
+      "description": "A day trading strategy involving quick, short transactions to make many small profits on minor price changes. Scalpers can make up to 200 trades per day. Requires high liquidity, low volatility, short time frames, and strict risk management.",
+      "indicators": ["1-minute charts", "Bid-ask spread"],
+      "source": "STRATEGIES.txt"
+    },
+    {
+      "id": 9,
+      "name": "Fading Trading Strategy",
+      "category": "Trading Style - Day Trading",
+      "description": "A contrarian day trading strategy that trades against the prevailing trend. Sell when price is rising, buy when price is falling. Based on assumptions that securities are overbought/oversold and early buyers/sellers are ready to take profits. High risk, high reward.",
+      "indicators": ["Limit orders", "Price reversal patterns"],
+      "source": "STRATEGIES.txt"
+    },
+    {
+      "id": 10,
+      "name": "Daily Pivot Trading Strategy",
+      "category": "Trading Style - Day Trading",
+      "description": "Aims to profit from daily volatility by calculating pivot points (P) and support/resistance levels (S1, S2, R1, R2) based on previous day's high, low, and close. Buy at the lowest price of the day and sell at the highest.",
+      "indicators": ["Pivot Point = (H + L + C) / 3", "R1 = (P x 2) – L", "S1 = (P x 2) – H", "R2 = P + (H - L)", "S2 = P - (H - L)"],
+      "source": "STRATEGIES.txt"
+    },
+    {
+      "id": 11,
+      "name": "Momentum Trading Strategy",
+      "category": "Trading Style - Day Trading",
+      "description": "Based on the concept that existing trends are likely to continue. Buy currencies showing an upward trend and sell those showing a downtrend. Uses technical indicators like MACD, RSI, and momentum oscillator, plus news and volume analysis.",
+      "indicators": ["MACD", "RSI", "Momentum Oscillator", "News", "Volume"],
+      "source": "STRATEGIES.txt"
+    },
+    {
+      "id": 12,
+      "name": "Forex Technical Analysis Strategies",
+      "category": "Technical Analysis",
+      "description": "Using charts and technical tools to forecast future price trends. Includes market trend, volume, range, support/resistance, chart patterns, indicators, and Multiple Time Frame Analysis.",
+      "indicators": ["Charts", "Technical tools"],
+      "source": "STRATEGIES.txt"
+    },
+    {
+      "id": 13,
+      "name": "Forex Trading Strategy Based on Fundamental Analysis",
+      "category": "Fundamental Analysis",
+      "description": "Focuses on macroeconomic indicators (economic growth, interest rates, unemployment, inflation) and political issues that impact currency values. Uses long timeframes as data is generated slowly. Aims to understand 'why' markets move.",
+      "indicators": ["Economic data releases", "Interest rates", "Inflation", "Unemployment", "Political events"],
+      "source": "STRATEGIES.txt"
+    },
+    {
+      "id": 14,
+      "name": "Forex Trading Strategy Based on Market Sentiment",
+      "category": "Market Sentiment",
+      "description": "Based on investors' attitudes and opinions towards the market. Bullish sentiment anticipates upward price movement; bearish sentiment anticipates downward movement. Contrarian investors trade opposite to prevailing sentiment.",
+      "indicators": ["Trader opinions", "Market positioning", "Sentiment indicators"],
+      "source": "STRATEGIES.txt"
+    },
+    {
+      "id": 15,
+      "name": "Forex Day Trading Strategies",
+      "category": "Trading Style",
+      "description": "Buying and selling a security within the same day. No positions held overnight. Includes scalping, fading, daily pivots, and momentum trading. The longer positions are held, the higher the risk.",
+      "indicators": ["Intraday charts", "Day trading indicators"],
+      "source": "STRATEGIES.txt"
+    },
+    {
+      "id": 16,
+      "name": "Carry Trade Strategy",
+      "category": "Trading Style",
+      "description": "Borrowing a currency with a low interest rate and investing in a currency with a high interest rate. Profit comes from the interest rate differential. Best suited for trendless or sideways markets. Consider expected interest rate changes.",
+      "indicators": ["Interest rate differentials", "Economic outlook"],
+      "source": "STRATEGIES.txt"
+    },
+    {
+      "id": 17,
+      "name": "Forex Hedging Strategy",
+      "category": "Trading Style",
+      "description": "Protecting against losses by buying one currency and selling another. Works best with negatively correlated currencies. Aims to reduce risk and uncertainty, not necessarily to make a profit. Risk reduction means profit reduction.",
+      "indicators": ["Negatively correlated currency pairs", "Correlation analysis"],
+      "source": "STRATEGIES.txt"
+    },
+    {
+      "id": 18,
+      "name": "Portfolio / Basket Trading Strategy",
+      "category": "Trading Style",
+      "description": "Combining different assets from various financial markets (Forex, stocks, futures) to diversify and reduce risk. Mix assets with negative correlation to keep portfolio balance. IFC Markets offers GeWorko Method for portfolio trading.",
+      "indicators": ["Diversification", "Negative correlation", "Asset allocation"],
+      "source": "STRATEGIES.txt"
+    },
+    {
+      "id": 19,
+      "name": "Buy and Hold Strategy",
+      "category": "Trading Style",
+      "description": "Buying a security and holding it for a long time, ignoring short-term price movements and technical indicators. Passive investors rely on fundamental analysis; active investors may use technical analysis. Mostly used by stock traders but also some Forex traders.",
+      "indicators": ["Fundamental factors (inflation, unemployment)", "Company analysis for stocks"],
+      "source": "STRATEGIES.txt"
+    },
+    {
+      "id": 20,
+      "name": "Spread / Pair Trading Strategy",
+      "category": "Trading Style",
+      "description": "Simultaneously buying and selling two related financial instruments. Profit or loss comes from the difference in price changes. Two types: intra-market (same asset) and inter-commodity (different but related assets like gold and silver). Focus on correlation, not market direction.",
+      "indicators": ["Price gap", "Correlation between instruments"],
+      "source": "STRATEGIES.txt"
+    },
+    {
+      "id": 21,
+      "name": "Swing Trading Strategy",
+      "category": "Trading Style",
+      "description": "Holding an asset for one to several days to profit from price changes ('swings'). Longer than day trading, shorter than buy-and-hold. Uses technical and fundamental analysis. Trades with the primary trend; buys in uptrend, sells in downtrend. In sideways markets, buys near support and sells near resistance.",
+      "indicators": ["Trend analysis", "Support and resistance", "Technical and fundamental analysis"],
+      "source": "STRATEGIES.txt"
+    },
+    {
+      "id": 22,
+      "name": "Forex Strategies Based on Trading Order Types",
+      "category": "Order Types",
+      "description": "Using different order types to enter or exit positions at optimal moments. Includes market orders, pending orders (buy limit, sell limit, buy stop, sell stop, buy stop limit, sell stop limit), limit orders, stop orders, stop loss orders, and OCO orders.",
+      "indicators": ["Market orders", "Pending orders", "Limit orders", "Stop orders", "Stop loss orders", "OCO orders"],
+      "source": "STRATEGIES.txt"
+    },
+    {
+      "id": 23,
+      "name": "Algorithmic Trading Strategies",
+      "category": "Algorithmic",
+      "description": "Automated Forex trading using computer programs to determine buy/sell decisions based on technical analysis signals. Avoids emotional component of trading. Platforms: NetTradeX (NetTradeX Advisors, NTL+) and MetaTrader 4 (MQL4, Advisors).",
+      "indicators": ["Technical analysis signals", "Programmed rules"],
+      "source": "STRATEGIES.txt"
+    },
+    {
+      "id": 24,
+      "name": "Momentum Reversal Trading Strategy",
+      "category": "Advanced - Combination",
+      "description": "Combines fundamental and technical analysis. Establish mid-to-long term trend via fundamentals (e.g., Commitments of Traders report), then use price momentum, support/resistance zones, and stochastic oscillator to spot reversals. Trades placed as pending limit orders, often during London session. Works on major USD crosses. 1-5 signals per month. Indicators: Stochastic Oscillator (multi-time frame), Support and Resistance, Fibonacci retracements.",
+      "indicators": ["Stochastic Oscillator", "Support and Resistance", "Fibonacci Retracements", "Commitments of Traders Report"],
+      "source": "9 Advanced and.txt"
+    },
+    {
+      "id": 25,
+      "name": "Moving Average Crossover Strategy",
+      "category": "Advanced - Technical",
+      "description": "Uses three moving averages: 20-period (fast), 60-period (slow), and 100-period (trend). BUY when fast MA crosses above slow MA. SELL when fast MA crosses below slow MA. Close position when they cross back. If price stays above/below 100-period line, a strong trend is in force. Works on daily charts (e.g., EURUSD).",
+      "indicators": ["20-period MA", "60-period MA", "100-period MA"],
+      "source": "9 Advanced and.txt"
+    },
+    {
+      "id": 26,
+      "name": "Heikin-Ashi Trading Strategy",
+      "category": "Advanced - Technical",
+      "description": "Uses Heikin-Ashi candles (calculated differently from standard candlesticks) to identify reversals. SHORT when two consecutive red candles appear after green candles. LONG when two consecutive green candles appear after red candles. Filters: Stochastic Oscillator (14,7,3) - enter long if stochastic > 70, short if < 30; Accelerator Oscillator confirmation; stop orders placed few pips above/below second reversal candle. Avoid news days (NFP, FOMC, etc.). Money management: move to break even after 50 pips profit, stop loss 100 pips or technical levels.",
+      "indicators": ["Heikin-Ashi candles", "Stochastic Oscillator (14,7,3)", "Accelerator Oscillator"],
+      "source": "9 Advanced and.txt"
+    },
+    {
+      "id": 27,
+      "name": "RSI Trading Strategy (5 Systems + Back Test Results)",
+      "category": "Advanced - Technical",
+      "description": "Multiple systems based on RSI. Includes the 2-period RSI strategy: BUY when 2-period RSI moves above 90, SELL when below 10. Aggressive short-term strategy; use rigorous stop loss. Add to positions on extra signals; close on opposing signal. Also includes RSI divergence trading.",
+      "indicators": ["RSI (various periods)", "2-period RSI"],
+      "source": "9 Advanced and.txt"
+    },
+    {
+      "id": 28,
+      "name": "The Swing Day Trading Strategy",
+      "category": "Advanced - Day Trading",
+      "description": "Identifies corrections in a trend (overlapping price bars) and catches the 'swing' back into the trend. Entry: sell when first candle moves below contracting range (in downtrend), or buy when price shows reversal at end of correction (in uptrend). Stop at most recent minor swing high/low or lowest point of correction. Uses 240-minute charts (e.g., EURUSD).",
+      "indicators": ["Price action", "Overlapping candles", "Trend lines"],
+      "source": "9 Advanced and.txt"
+    },
+    {
+      "id": 29,
+      "name": "Candlestick Patterns Strategy",
+      "category": "Advanced - Technical",
+      "description": "Trading based on candlestick patterns: Bullish/Bearish Engulfing, Long Shadow, Hammer. Wait for pattern candle to close, enter at open of next candle. Stop at low/high of pattern candle. Trailed to follow trend. The more candles engulfed, the more powerful the move.",
+      "indicators": ["Bullish Engulfing", "Bearish Engulfing", "Long Shadow", "Hammer"],
+      "source": "9 Advanced and.txt"
+    },
+    {
+      "id": 30,
+      "name": "Role Reversal Day Trading Strategy",
+      "category": "Advanced - Price Action",
+      "description": "Based on support becoming resistance (in downtrend) and resistance becoming support (in uptrend). In uptrend, buy on pullbacks to former resistance (now support). In downtrend, sell on pullbacks to former support (now resistance). Treat support/resistance as zones, not exact prices. Combine with Pivot Points and Fibonacci retracements. Divide position into 3 parts: 1/3 at 20MA, 1/3 at role reversal, 1/3 at 50% Fib retracement.",
+      "indicators": ["Support and Resistance", "Pivot Points", "Fibonacci Retracements", "20-period MA"],
+      "source": "9 Advanced and.txt"
+    },
+    {
+      "id": 31,
+      "name": "The Bollinger Band Squeeze Strategy",
+      "category": "Advanced - Technical",
+      "description": "Takes advantage of price movements after periods of low volatility. Bollinger Bands set to 20 periods, 2 standard deviations. Look for contraction in bands and Bollinger Band Width approaching 0.0100 (100 points). BUY when a full candle completes above the simple moving average line. SELL when a full candle completes below the SMA. Stops at high/low of preceding candle or max 3% loss. Uses 240-minute charts (e.g., EURUSD).",
+      "indicators": ["Bollinger Bands (20,2)", "Bollinger Band Width", "Simple Moving Average"],
+      "source": "9 Advanced and.txt"
+    },
+    {
+      "id": 32,
+      "name": "The Narrow Range Strategy",
+      "category": "Advanced - Technical",
+      "description": "Very short-term strategy aiming to profit from volatility change from low to high. Identify the candle with the narrowest range of the past 4 or 7 days ('Chubby' candle with open/close near high/low). BUY when price moves above the high of the narrow candle. SELL when price moves below the low. Stop at low/high of narrow candle, trailed.",
+      "indicators": ["Narrow range candle", "Price breakout"],
+      "source": "9 Advanced and.txt"
+    },
+    {
+      "id": 33,
+      "name": "The 2 Period RSI Strategy",
+      "category": "Advanced - Technical",
+      "description": "BUY when 2-period RSI moves above 90. SELL when 2-period RSI moves below 10. Very aggressive short-term strategy. Use rigorous stop loss. Add to positions on extra signals. Close positions when opposing signal is generated. Best in trending markets.",
+      "indicators": ["2-period RSI"],
+      "source": "9 Advanced and.txt"
+    },
+    {
+      "id": 34,
+      "name": "Binary Options Trading Strategy (150% Return)",
+      "category": "Advanced - Binary Options",
+      "description": "A binary options trading strategy that generates 150% return. (Details not fully specified in source, mentioned in table of contents.)",
+      "indicators": ["Not specified"],
+      "source": "9 Advanced and.txt"
+    }
+  ]
+}
