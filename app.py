@@ -1483,7 +1483,14 @@ def sidebar(running, connected, account):
             st.success(f"#{account.login} · {label}{' · REAL MONEY' if is_real else ''}")
             st.caption(f"Balance {account.balance:,.2f} {account.currency} · Equity {account.equity:,.2f}")
         else:
-            st.error("MT5 not connected. Start the terminal and log in, then refresh.")
+            code, message = mt('last_error')
+            st.error(f"MT5 not connected: {message} (code {code}).")
+            if code == -6:
+                st.caption("The terminal is open but not logged in to a trading account. In MT5 check the "
+                           "connection status (bottom right) and the Journal tab, then log in via "
+                           "File > Login to Trade Account, or open a new demo account. Refresh this page after.")
+            else:
+                st.caption("Start the MT5 terminal and log in, then refresh this page.")
 
         st.header("Market")
         options = sorted(set(DEFAULT_SYMBOLS) | set(saved.symbols))

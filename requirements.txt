@@ -1,0 +1,5 @@
+streamlit>=1.52
+MetaTrader5>=5.0.45
+pandas>=2.2
+numpy>=1.26
+plotly>=5.20

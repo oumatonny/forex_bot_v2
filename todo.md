@@ -43,7 +43,8 @@ Files: `main.py` (manual), `tradepilot_auto.py` (Bollinger/RSI), `smc_ict_auto.p
 - [x] No log file, no trade journal, no backtest — nothing showed whether a strategy has an edge.
 - [x] `time.sleep(1); st.rerun()` whole-page loop replaced by a 2 s fragment.
 - [ ] ~70 % of the code is duplicated across four files — retire the old bots once `app.py` has run on demo (keep `main.py` only if the manual dashboard is still wanted).
-- [ ] No `requirements.txt`, README, tests in the repo, or git. `.env` holds API keys with no `.gitignore` — add one before `git init`.
+- [x] `requirements.txt` and a `.gitignore` covering `.env` and `bot_data/`.
+- [ ] No README, no tests in the repo, no git yet. `.env` holds API keys (one in a comment) — rotate any key that has ever been shared.
 
 ---
 

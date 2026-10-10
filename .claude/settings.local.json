@@ -4,7 +4,11 @@
       "PowerShell(python --version; python -c \"import streamlit, pandas, numpy, plotly; print\\('streamlit', streamlit.__version__, 'pandas', pandas.__version__, 'numpy', numpy.__version__, 'plotly', plotly.__version__\\)\"; python -c \"import MetaTrader5 as m; print\\('MetaTrader5', m.__version__\\)\"; python -c \"import streamlit_autorefresh\" ; Get-Process terminal64 -ErrorAction SilentlyContinue | Select-Object Name, Id; \\(Get-Content .env | ForEach-Object { \\($_ -split '='\\)[0] }\\) -join ', '; Get-ChildItem -Force | Select-Object Name, Length)",
       "PowerShell(\\(Get-Command py -ErrorAction SilentlyContinue\\).Source; py -0p; Get-ChildItem \"$env:LOCALAPPDATA\\\\Programs\\\\Python\" -ErrorAction SilentlyContinue | Select-Object Name; \\(Get-Command streamlit -ErrorAction SilentlyContinue\\).Source; \\(Get-Command conda -ErrorAction SilentlyContinue\\).Source; Get-Process terminal64 -ErrorAction SilentlyContinue | Select-Object Name, Id)",
       "PowerShell(py \"$env:LOCALAPPDATA\\\\Temp\\\\claude\\\\d--Projects-forex-v2\\\\e52a7fd1-0c22-4344-b783-d9c8f1f3d4dc\\\\scratchpad\\\\test_core.py\" 2>&1 | Select-String -NotMatch \"ScriptRunContext|bare mode\" | Select-Object -Last 60)",
-      "PowerShell(py \"$env:LOCALAPPDATA\\\\Temp\\\\claude\\\\d--Projects-forex-v2\\\\e52a7fd1-0c22-4344-b783-d9c8f1f3d4dc\\\\scratchpad\\\\test_engine.py\" 2>&1 | Select-String -NotMatch \"ScriptRunContext|bare mode\" | Select-Object -Last 45)"
+      "PowerShell(py \"$env:LOCALAPPDATA\\\\Temp\\\\claude\\\\d--Projects-forex-v2\\\\e52a7fd1-0c22-4344-b783-d9c8f1f3d4dc\\\\scratchpad\\\\test_engine.py\" 2>&1 | Select-String -NotMatch \"ScriptRunContext|bare mode\" | Select-Object -Last 45)",
+      "PowerShell(py \"$env:LOCALAPPDATA\\\\Temp\\\\claude\\\\d--Projects-forex-v2\\\\e52a7fd1-0c22-4344-b783-d9c8f1f3d4dc\\\\scratchpad\\\\test_ui.py\" 2>&1 | Select-Object -Last 25)",
+      "PowerShell(git -C D:\\\\Projects\\\\forex_v2 ls-files)",
+      "PowerShell(git -C D:\\\\Projects\\\\forex_v2 remote -v)",
+      "PowerShell($log = Get-ChildItem \"$env:APPDATA\\\\MetaQuotes\\\\Terminal\\\\D0E8209F77C8CF37AD8BF550E51FF075\\\\logs\" | Sort-Object LastWriteTime | Select-Object -Last 1; $log.Name; Get-Content $log.FullName -Encoding Unicode -Tail 25)"
     ]
   }
 }
