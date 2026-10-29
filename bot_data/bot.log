@@ -9727,3 +9727,71 @@
 2026-10-10 18:37:10,200 INFO ENGINE |  | STARTED | live | EURUSD, GBPUSD | M15 | 1 strategies
 2026-10-10 18:37:10,205 INFO EURUSD | adopted | INFO | picked up untracked bot position #7
 2026-10-10 18:37:10,207 INFO EURUSD | adopted | CLOSED | #7 test flatten | P&L -0.08 (+0.00R)
+2026-10-10 18:43:14,962 INFO ENGINE |  | STARTED | paper | EURUSD, GBPUSD, USDJPY | M15 | 3 strategies
+2026-10-10 18:43:14,962 INFO ENGINE |  | STARTED | paper | EURUSD, GBPUSD, USDJPY | M15 | 3 strategies
+2026-10-12 11:48:15,314 INFO ENGINE |  | STARTED | paper | EURUSD, GBPUSD, USDJPY | M15 | 3 strategies
+2026-10-12 11:49:24,703 INFO ENGINE |  | STOPPED | open positions keep their broker SL/TP
+2026-10-12 11:49:41,427 INFO ENGINE |  | STARTED | paper | XAUUSD | M15 | 3 strategies
+2026-10-12 11:49:43,573 INFO XAUUSD | smc | SKIPPED | smc SELL dropped: HTF trend is flat
+2026-10-12 12:15:36,721 INFO ENGINE |  | STOPPED | open positions keep their broker SL/TP
+2026-10-12 12:16:19,938 INFO BTCUSD |  | SKIPPED | symbol not offered by this broker
+2026-10-12 12:16:28,185 INFO ENGINE |  | STARTED | paper | XAUUSD, AUDUSD, EURUSD, GBPUSD, NZDUSD, USDCAD, USDJPY | M5 | 3 strategies
+2026-10-12 12:20:01,033 INFO XAUUSD | trend_pullback | SKIPPED | trend_pullback SELL dropped: HTF trend is flat
+2026-10-12 12:25:00,683 INFO NZDUSD | trend_pullback | SKIPPED | trend_pullback SELL dropped: HTF trend is flat
+2026-10-12 12:25:00,746 INFO USDCAD | trend_pullback | OPENED | BUY 14.84 @ 1.42640 | SL 1.42592 | TP 1.42712 | risk 499.96 | votes 2 | Uptrend pullback to EMA20, resumed
+2026-10-12 12:35:00,221 INFO GBPUSD | smc | SKIPPED | smc BUY dropped: HTF trend is flat
+2026-10-12 12:35:00,257 INFO NZDUSD | smc | SKIPPED | smc BUY dropped: HTF trend is flat
+2026-10-12 12:45:00,110 INFO GBPUSD | smc | SKIPPED | smc BUY dropped: HTF trend is flat
+2026-10-12 12:50:00,258 INFO NZDUSD | trend_pullback | SKIPPED | trend_pullback SELL dropped: HTF trend is flat
+2026-10-12 12:55:02,132 INFO NZDUSD | trend_pullback | SKIPPED | trend_pullback SELL dropped: HTF trend is flat
+2026-10-12 12:55:55,325 INFO ENGINE |  | STOPPED | open positions keep their broker SL/TP
+2026-10-12 12:57:21,234 INFO ENGINE |  | STARTED | live | XAUUSD, AUDUSD, EURUSD, GBPUSD, NZDUSD, USDCAD, USDJPY | M5 | 3 strategies
+2026-10-12 13:00:00,516 INFO USDJPY | bb_rsi_reversion | REJECTED | SELL 31.4: retcode 10027: AutoTrading disabled by client
+2026-10-12 13:05:00,434 INFO USDCAD | smc | SKIPPED | smc SELL dropped: HTF trend is up
+2026-10-12 13:30:00,510 INFO GBPUSD | smc | SKIPPED | smc SELL dropped: HTF trend is flat
+2026-10-12 13:35:01,226 INFO GBPUSD | trend_pullback | SKIPPED | trend_pullback SELL dropped: HTF trend is flat
+2026-10-12 13:35:01,226 INFO GBPUSD | smc | SKIPPED | smc SELL dropped: HTF trend is flat
+2026-10-12 13:45:01,952 INFO GBPUSD | trend_pullback | SKIPPED | trend_pullback SELL dropped: HTF trend is flat
+2026-10-12 13:50:01,670 INFO XAUUSD | smc | SKIPPED | smc SELL dropped: HTF trend is flat
+2026-10-12 13:50:02,013 INFO USDCAD | smc | REJECTED | BUY 60.97: retcode 10027: AutoTrading disabled by client
+2026-10-13 04:55:05,904 INFO ENGINE |  | STARTED | live | XAUUSD, AUDUSD, EURUSD, GBPUSD, NZDUSD, USDCAD, USDJPY | M5 | 3 strategies
+2026-10-13 04:55:06,002 INFO XAUUSD | smc | SKIPPED | smc BUY dropped: HTF trend is flat
+2026-10-13 04:55:06,087 INFO AUDUSD | smc | SKIPPED | smc BUY dropped: HTF trend is flat
+2026-10-13 04:55:09,387 INFO USDCAD | smc | SKIPPED | smc SELL dropped: HTF trend is up
+2026-10-13 05:05:01,127 INFO GBPUSD | smc | REJECTED | SELL 27.33: retcode 10027: AutoTrading disabled by client
+2026-10-13 05:10:00,894 INFO EURUSD | smc | REJECTED | SELL 40.64: retcode 10027: AutoTrading disabled by client
+2026-10-13 05:10:00,928 INFO GBPUSD | smc | REJECTED | SELL 27.49: retcode 10027: AutoTrading disabled by client
+2026-10-13 05:15:00,609 INFO AUDUSD | trend_pullback | REJECTED | SELL 14.14: retcode 10027: AutoTrading disabled by client
+2026-10-13 05:35:01,885 INFO XAUUSD | smc | SKIPPED | smc SELL dropped: HTF trend is flat
+2026-10-13 05:35:01,991 INFO GBPUSD | smc | SKIPPED | smc SELL dropped: HTF trend is flat
+2026-10-13 06:00:01,402 INFO USDCAD | smc | SKIPPED | smc BUY dropped: HTF trend is flat
+2026-10-13 06:00:01,449 INFO USDJPY | smc | SKIPPED | smc BUY dropped: HTF trend is flat
+2026-10-13 06:05:00,899 INFO EURUSD | smc | SKIPPED | smc SELL dropped: HTF trend is flat
+2026-10-13 06:10:02,582 INFO EURUSD | smc | SKIPPED | smc SELL dropped: HTF trend is flat
+2026-10-13 06:10:02,761 INFO USDCAD | smc | SKIPPED | smc SELL dropped: HTF trend is flat
+2026-10-13 06:20:02,442 INFO USDJPY | smc | SKIPPED | smc SELL dropped: HTF trend is flat
+2026-10-13 06:35:01,552 INFO XAUUSD | smc | SKIPPED | smc SELL dropped: HTF trend is up
+2026-10-13 06:35:01,592 INFO AUDUSD | smc | REJECTED | SELL 18.64: retcode 10027: AutoTrading disabled by client
+2026-10-13 06:35:01,704 INFO NZDUSD | smc | SKIPPED | smc SELL dropped: HTF trend is flat
+2026-10-13 06:40:01,611 INFO AUDUSD | smc | REJECTED | SELL 33.95: retcode 10027: AutoTrading disabled by client
+2026-10-13 06:45:01,653 INFO GBPUSD | smc | SKIPPED | smc BUY dropped: HTF trend is flat
+2026-10-13 06:50:01,818 INFO USDJPY | trend_pullback | SKIPPED | trend_pullback SELL dropped: HTF trend is flat
+2026-10-13 06:50:01,818 INFO USDJPY | smc | SKIPPED | smc SELL dropped: HTF trend is flat
+2026-10-13 06:57:18,913 INFO ENGINE |  | STOPPED | open positions keep their broker SL/TP
+2026-10-29 18:48:18,575 INFO ENGINE |  | STARTED | live | XAUUSD, AUDUSD, EURUSD, GBPUSD, NZDUSD, USDCAD, USDJPY | M5 | 3 strategies
+2026-10-29 18:50:01,854 INFO USDCAD | smc | SKIPPED | smc BUY dropped: HTF trend is down
+2026-10-29 19:00:02,392 INFO USDJPY | trend_pullback | SKIPPED | trend_pullback SELL dropped: HTF trend is flat
+2026-10-29 19:05:54,557 INFO ENGINE |  | STARTED | live | XAUUSD, AUDUSD, EURUSD, GBPUSD, NZDUSD, USDCAD, USDJPY | M5 | 3 strategies
+2026-10-29 19:05:54,557 INFO ENGINE |  | STARTED | live | XAUUSD, AUDUSD, EURUSD, GBPUSD, NZDUSD, USDCAD, USDJPY | M5 | 3 strategies
+2026-10-29 19:10:02,785 INFO EURUSD | trend_pullback | SKIPPED | trend_pullback BUY dropped: HTF trend is flat
+2026-10-29 19:10:02,785 INFO EURUSD | trend_pullback | SKIPPED | trend_pullback BUY dropped: HTF trend is flat
+2026-10-29 19:15:01,828 INFO USDJPY | trend_pullback | SKIPPED | trend_pullback SELL dropped: HTF trend is flat
+2026-10-29 19:15:01,828 INFO USDJPY | trend_pullback | SKIPPED | trend_pullback SELL dropped: HTF trend is flat
+2026-10-29 19:20:01,851 INFO AUDUSD | smc | SKIPPED | smc SELL dropped: HTF trend is up
+2026-10-29 19:20:01,851 INFO AUDUSD | smc | SKIPPED | smc SELL dropped: HTF trend is up
+2026-10-29 19:20:01,955 INFO EURUSD | smc | SKIPPED | smc SELL dropped: HTF trend is flat
+2026-10-29 19:20:01,955 INFO EURUSD | smc | SKIPPED | smc SELL dropped: HTF trend is flat
+2026-10-29 19:20:02,157 INFO NZDUSD | smc | SKIPPED | smc SELL dropped: HTF trend is flat
+2026-10-29 19:20:02,157 INFO NZDUSD | smc | SKIPPED | smc SELL dropped: HTF trend is flat
+2026-10-29 19:20:02,588 INFO USDJPY | smc | SKIPPED | smc BUY dropped: HTF trend is flat
+2026-10-29 19:20:02,588 INFO USDJPY | smc | SKIPPED | smc BUY dropped: HTF trend is flat

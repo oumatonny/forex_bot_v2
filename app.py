@@ -42,9 +42,11 @@ Set SUPERBOT_OFFLINE=1 to run without MetaTrader5 (CSV backtests only).
 from __future__ import annotations
 
 import csv
+import base64
 import json
 import logging
 import math
+import re
 import os
 import threading
 import time
@@ -68,6 +70,17 @@ try:
 except ImportError:
     mt5 = None
     MT5_AVAILABLE = False
+
+try:
+    from dotenv import load_dotenv
+    load_dotenv()               # OPENROUTER_API_KEY / OPENROUTER_MODEL for the chart analyzer
+except ImportError:
+    pass
+
+try:
+    import requests
+except ImportError:
+    requests = None
 
 # ============================================================================
 # CONSTANTS & FILES
@@ -722,6 +735,25 @@ def account_mode(account):
     return ("REAL" if mode == getattr(mt5, 'ACCOUNT_TRADE_MODE_REAL', 2) else "UNKNOWN"), True
 
 
+def trading_permission():
+    """None when MT5 will accept orders from this script, else what has to be switched on.
+    When this is not None every order comes back as retcode 10027 'AutoTrading disabled by client'."""
+    term, account = mt('terminal_info'), mt('account_info')
+    if term is None or account is None:
+        return "cannot read terminal/account info from MT5"
+    if not term.trade_allowed:
+        return ("Algo Trading is switched OFF in the MT5 terminal. Click the 'Algo Trading' button on the MT5 "
+                "toolbar so it turns green (or Tools > Options > Expert Advisors > tick 'Allow algorithmic trading').")
+    if getattr(term, 'tradeapi_disabled', False):
+        return ("MT5 is blocking trades from Python. In Tools > Options > Expert Advisors untick "
+                "'Disable algorithmic trading via external Python API'.")
+    if not account.trade_allowed:
+        return "trading is not allowed on this login (investor / read-only password?)."
+    if not getattr(account, 'trade_expert', True):
+        return "the broker does not allow automated trading on this account."
+    return None
+
+
 def resolve_symbol(name):
     """Finds the broker's actual symbol for a plain name (EURUSD -> EURUSDm, EURUSD.a, ...)."""
     info = mt('symbol_info', name)
@@ -899,6 +931,8 @@ class Engine:
         self.last_cycle = None
         self.last_error = None
         self.server_time = None
+        self.trade_block = None           # live: why MT5 would refuse orders right now (None = allowed)
+        self.retry_entries = {}           # sym -> (key, sig, votes, atr, bar) refused only because trading was off
         self.state_file = DATA_DIR / f"state_{settings.mode}.json"
 
     # ---- lifecycle ---------------------------------------------------------
@@ -952,6 +986,7 @@ class Engine:
                 self.s.max_per_symbol = 1
                 self._note('ENGINE', '', 'INFO', 'netting account: one position per symbol')
         self._load_state()
+        self._check_permission()
         for sym in self.symbols:
             # The bar that is already closed at start-up is analysed for display
             # but never traded - it may have closed most of a candle ago.
@@ -1011,6 +1046,7 @@ class Engine:
             self.last_error = "MT5 disconnected - retrying. Open positions are protected by their broker-side SL/TP."
             return
         self._update_clock()
+        self._check_permission()
         if self.flatten_req:
             self.flatten_req = False
             self._flatten_all("flattened by user")
@@ -1021,7 +1057,15 @@ class Engine:
             bar_time = last_closed_bar_time(sym, self.s.timeframe)
             if bar_time is not None and bar_time != self.last_bar.get(sym):
                 self.last_bar[sym] = bar_time
+                self.retry_entries.pop(sym, None)
                 self._evaluate(sym, trade=True)
+        if self.retry_entries and not self.trade_block:
+            # Trading was switched back on while the signal's bar is still the latest one: take it now.
+            for sym, (key, sig, votes, atr, bar) in list(self.retry_entries.items()):
+                del self.retry_entries[sym]
+                if bar == self.last_bar.get(sym):
+                    self._note(sym, key, 'INFO', "trading enabled again - retrying this bar's signal")
+                    self._enter(sym, key, sig, votes, atr)
         self.last_cycle = time.time()
         if self.last_error and self.last_error.startswith("MT5 disconnected"):
             self.last_error = None
@@ -1042,6 +1086,21 @@ class Engine:
             self.opened_today = 0
             self._load_closed_today()
             self._save_state()
+
+    def _check_permission(self):
+        if not self.live:
+            return
+        block = trading_permission()
+        if block != self.trade_block:
+            if block:
+                self._note('ENGINE', '', 'WARN', f"live orders will be refused: {block}")
+            else:
+                self._note('ENGINE', '', 'INFO', "MT5 accepts automated orders again")
+        self.trade_block = block
+        if block:
+            self.last_error = f"Live orders are blocked - {block} The bot keeps scanning and will trade as soon as this is fixed."
+        elif self.last_error and self.last_error.startswith("Live orders are blocked"):
+            self.last_error = None
 
     def _check_halts(self):
         if self.day_halt:
@@ -1156,6 +1215,9 @@ class Engine:
         info, tick, account = mt('symbol_info', sym), mt('symbol_info_tick', sym), mt('account_info')
         if info is None or tick is None or account is None:
             return self._note(sym, key, 'BLOCKED', f"{side}: no symbol/tick/account data")
+        if self.live and self.trade_block:
+            self.retry_entries[sym] = (key, sig, votes, atr, self.last_bar.get(sym))
+            return self._note(sym, key, 'BLOCKED', f"{side}: MT5 is refusing automated orders - {self.trade_block}")
         block = self._entry_block(sym, info)
         if block:
             return self._note(sym, key, 'BLOCKED', f"{side}: {block}")
@@ -1192,6 +1254,10 @@ class Engine:
                 return self._note(sym, key, 'BLOCKED', f"{side}: needs {margin:.2f} margin, {account.margin_free:.2f} free")
             result, message = _send_deal(sym, order_type, lot, self.s.deviation, f"SB {key}", plan.sl, plan.tp)
             if result is None:
+                if message.startswith(f"retcode {getattr(mt5, 'TRADE_RETCODE_CLIENT_DISABLES_AT', 10027)}"):
+                    self.trade_block = trading_permission()
+                    if self.trade_block:    # only retry when we can see it being switched back on
+                        self.retry_entries[sym] = (key, sig, votes, atr, self.last_bar.get(sym))
                 return self._note(sym, key, 'REJECTED', f"{side} {lot}: {message}")
             ticket, fill = int(result.order), float(result.price or plan.entry)
             found = mt('positions_get', ticket=ticket)
@@ -1468,6 +1534,233 @@ def recent_signal_markers(d, keys, htf, use_htf, lookback=200):
 
 
 # ============================================================================
+# CHART IMAGE ANALYSIS (vision model via OpenRouter). Separate from the rule
+# engine: it only gives a written plan and never sends an order.
+# ============================================================================
+OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
+DEFAULT_VISION_MODEL = "openai/gpt-4o"
+
+CHART_SYSTEM_PROMPT = (
+    "You are a disciplined professional forex/CFD price-action trader reviewing a screenshot of a chart. "
+    "Read the price axis carefully: every price you give must be a level visible on, or directly implied by, "
+    "the chart's price scale. Identify trend and market structure (higher highs/lows, breaks of structure), "
+    "key support/resistance and supply/demand zones, liquidity pools, fair value gaps, chart and candlestick "
+    "patterns, and any indicators shown. Then give exactly TWO trade scenarios: the most probable setup first "
+    "and the best alternative second (often the opposite direction, triggered if the first is invalidated). "
+    "Each needs a precise entry, a stop loss beyond a structural level (not inside noise), and two take-profit "
+    "levels at realistic targets (next liquidity / opposing zone). BUY: stop_loss < entry < take_profit_1 < "
+    "take_profit_2. SELL: take_profit_2 < take_profit_1 < entry < stop_loss. Aim for at least 1:1.5 reward to "
+    "risk on TP1. Probabilities are your honest estimate and the two should sum to at most 100. "
+    "Respond with STRICT JSON ONLY, no markdown, in exactly this shape: "
+    '{"symbol": str, "timeframe": str, "current_price": number, "trend": "up"|"down"|"range", '
+    '"market_structure": str, "key_levels": [{"price": number, "type": "support"|"resistance"|"zone", '
+    '"note": str}], "patterns": [str], "scenarios": [{"name": str, "direction": "BUY"|"SELL", '
+    '"probability": <0-100 integer>, "entry_type": "market"|"buy limit"|"sell limit"|"buy stop"|"sell stop", '
+    '"entry": number, "stop_loss": number, "take_profit_1": number, "take_profit_2": number, '
+    '"trigger": str, "invalidation": str, "reasoning": [str]}], "warnings": [str]}'
+)
+
+
+def openrouter_key():
+    key = (st.session_state.get('openrouter_key') or os.environ.get("OPENROUTER_API_KEY") or "").strip().strip('"\'')
+    return key or None
+
+
+def call_vision_model(image_bytes, mime, user_text, model, api_key, timeout=90):
+    """(content|None, error|None)"""
+    if requests is None:
+        return None, "The 'requests' package is not installed - run: pip install requests"
+    image_url = f"data:{mime};base64,{base64.b64encode(image_bytes).decode()}"
+    payload = {
+        "model": model, "temperature": 0.2, "max_tokens": 1800, "stream": False,
+        "messages": [
+            {"role": "system", "content": CHART_SYSTEM_PROMPT},
+            {"role": "user", "content": [{"type": "text", "text": user_text},
+                                         {"type": "image_url", "image_url": {"url": image_url}}]},
+        ],
+    }
+    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json",
+               "HTTP-Referer": "https://tradepilot.local", "X-OpenRouter-Title": "TradePilot Chart Analyzer"}
+    try:
+        resp = requests.post(OPENROUTER_API_URL, headers=headers, json=payload, timeout=timeout)
+    except requests.exceptions.RequestException as exc:
+        return None, f"OpenRouter request failed: {exc}"
+    if resp.status_code == 401:
+        return None, "OpenRouter returned 401 - the API key is wrong, expired or revoked (openrouter.ai/keys)."
+    if resp.status_code != 200:
+        return None, f"OpenRouter returned HTTP {resp.status_code}: {resp.text[:300]}"
+    try:
+        return resp.json()["choices"][0]["message"]["content"], None
+    except (KeyError, IndexError, ValueError) as exc:
+        return None, f"Unexpected OpenRouter response: {exc}"
+
+
+def parse_chart_analysis(text):
+    """Pulls the JSON object out of the reply, tolerating ```json fences or stray prose."""
+    match = re.search(r"\{.*\}", text or "", re.S)
+    if not match:
+        return None
+    try:
+        return json.loads(match.group(0))
+    except ValueError:
+        return None
+
+
+def check_scenario(sc):
+    """Adds 'rr1', 'rr2' and a list of 'problems' (wrong-side stops/targets) to a scenario dict."""
+    problems = []
+    try:
+        d = 1 if str(sc.get('direction', '')).upper() == 'BUY' else -1
+        entry, sl = float(sc['entry']), float(sc['stop_loss'])
+        tp1, tp2 = float(sc['take_profit_1']), float(sc.get('take_profit_2') or sc['take_profit_1'])
+    except (KeyError, TypeError, ValueError):
+        sc['problems'] = ["missing or non-numeric entry / stop loss / take profit"]
+        return sc
+    risk = (entry - sl) * d
+    if risk <= 0:
+        problems.append("stop loss is on the wrong side of the entry")
+    if (tp1 - entry) * d <= 0:
+        problems.append("take profit 1 is on the wrong side of the entry")
+    if (tp2 - tp1) * d < 0:
+        problems.append("take profit 2 is closer than take profit 1")
+    sc['rr1'] = (tp1 - entry) * d / risk if risk > 0 else None
+    sc['rr2'] = (tp2 - entry) * d / risk if risk > 0 else None
+    if sc['rr1'] is not None and 0 < sc['rr1'] < 1:
+        problems.append(f"TP1 pays only {sc['rr1']:.2f}R - less than the risk")
+    sc['problems'] = problems
+    return sc
+
+
+def live_context(symbol, timeframe):
+    """Live bid/ask/ATR from MT5 to anchor the image read, or None."""
+    sym = resolve_symbol(symbol) if symbol else None
+    if not sym:
+        return None
+    tick, info = mt('symbol_info_tick', sym), mt('symbol_info', sym)
+    if tick is None or info is None:
+        return None
+    ctx = {'symbol': sym, 'bid': tick.bid, 'ask': tick.ask, 'digits': info.digits, 'atr': None}
+    if timeframe in TF_SECONDS:
+        df = fetch_bars(sym, timeframe, 300)
+        if df is not None and len(df) >= 60:
+            ctx['atr'] = float(add_indicators(df)['atr'].iloc[-1])
+    return ctx
+
+
+def tab_chart_analyzer(connected):
+    st.caption("Upload a screenshot of your chart and an AI vision model reads it and gives two trade scenarios "
+               "with entry, stop loss and take profits. Separate from the bot: it never places an order. No analysis "
+               "is perfect - a chart image is read approximately, so check every level on your own chart before trading.")
+    left, right = st.columns([3, 2])
+    with left:
+        upload = st.file_uploader("Chart screenshot", type=["png", "jpg", "jpeg", "webp"])
+        if upload is not None:
+            st.image(upload, width="stretch")
+    with right:
+        symbol = st.text_input("Symbol (optional)", "", help="e.g. EURUSD, XAUUSD. Helps the model, and with MT5 "
+                                                             "connected the live price is used to anchor the levels.").strip().upper()
+        tf_options = ["(read from chart)"] + list(TF_SECONDS)
+        timeframe = st.selectbox("Timeframe (optional)", tf_options)
+        notes = st.text_area("Anything else? (optional)", "", placeholder="e.g. I only trade with the H4 trend; "
+                                                                            "the blue lines are my supply zones")
+        model = st.text_input("Vision model (OpenRouter)", os.environ.get("OPENROUTER_VISION_MODEL", DEFAULT_VISION_MODEL),
+                              help="Any OpenRouter model that accepts images, e.g. openai/gpt-4o, "
+                                   "anthropic/claude-sonnet-4.5, google/gemini-2.5-pro.")
+        if not os.environ.get("OPENROUTER_API_KEY"):
+            st.text_input("OpenRouter API key", type="password", key='openrouter_key',
+                          help="Or put OPENROUTER_API_KEY=... in a .env file next to app.py. Kept only for this session.")
+        api_key = openrouter_key()
+        go_btn = st.button("Analyze chart", type="primary", width="stretch", disabled=upload is None or not api_key)
+        if upload is None:
+            st.caption("Upload a chart image to start.")
+        elif not api_key:
+            st.caption("Add an OpenRouter API key to start.")
+
+    if go_btn:
+        tf = None if timeframe.startswith("(") else timeframe
+        ctx = live_context(symbol, tf) if connected and symbol else None
+        lines = [f"Symbol: {symbol or 'read it from the chart'}", f"Timeframe: {tf or 'read it from the chart'}"]
+        if ctx:
+            lines.append(f"Live MT5 price right now: bid {ctx['bid']:.{ctx['digits']}f} / ask {ctx['ask']:.{ctx['digits']}f}"
+                         + (f", ATR(14) on {tf} {ctx['atr']:.{ctx['digits']}f}" if ctx['atr'] else "")
+                         + ". Use it to anchor your levels if the chart's price scale is hard to read.")
+        if notes.strip():
+            lines.append(f"Trader's notes: {notes.strip()}")
+        lines.append("Analyze this chart and give the two trade scenarios.")
+        with st.spinner("Reading the chart..."):
+            content, error = call_vision_model(upload.getvalue(), upload.type or "image/png", "\n".join(lines),
+                                               model.strip(), api_key)
+        if error:
+            st.error(error)
+            return
+        result = parse_chart_analysis(content)
+        if result is None:
+            st.error("The model did not return a readable analysis. Try again or pick another model.")
+            with st.expander("Raw reply"):
+                st.text(content)
+            return
+        st.session_state['chart_analysis'] = {'result': result, 'ctx': ctx, 'name': upload.name}
+
+    saved = st.session_state.get('chart_analysis')
+    if not saved:
+        return
+    res, ctx = saved['result'], saved['ctx']
+    st.divider()
+    st.subheader(f"{res.get('symbol') or 'Chart'} · {res.get('timeframe') or ''} · trend: {res.get('trend', '?')}")
+    if res.get('market_structure'):
+        st.write(res['market_structure'])
+    if ctx:
+        st.caption(f"Live {ctx['symbol']}: bid {ctx['bid']:.{ctx['digits']}f} / ask {ctx['ask']:.{ctx['digits']}f}")
+
+    scenarios = [check_scenario(dict(sc)) for sc in (res.get('scenarios') or [])[:2]]
+    if not scenarios:
+        st.warning("No trade scenarios in the reply.")
+    cols = st.columns(max(len(scenarios), 1))
+    for n, (col, sc) in enumerate(zip(cols, scenarios), start=1):
+        with col, st.container(border=True):
+            side = str(sc.get('direction', '?')).upper()
+            icon = "🟢" if side == 'BUY' else "🔴"
+            st.markdown(f"### {icon} Scenario {n}: {side} · {sc.get('probability', '?')}%")
+            if sc.get('name'):
+                st.markdown(f"**{sc['name']}**")
+            st.markdown(f"Entry type: **{sc.get('entry_type', 'market')}**")
+            m1, m2 = st.columns(2)
+            m1.metric("Entry", sc.get('entry'))
+            m2.metric("Stop loss", sc.get('stop_loss'))
+            m3, m4 = st.columns(2)
+            m3.metric("Take profit 1", sc.get('take_profit_1'),
+                      f"{sc['rr1']:.2f}R" if sc.get('rr1') is not None else None, delta_color="off")
+            m4.metric("Take profit 2", sc.get('take_profit_2'),
+                      f"{sc['rr2']:.2f}R" if sc.get('rr2') is not None else None, delta_color="off")
+            if ctx and ctx.get('atr'):
+                try:
+                    live = ctx['ask'] if side == 'BUY' else ctx['bid']
+                    st.caption(f"Entry is {abs(float(sc['entry']) - live) / ctx['atr']:.1f} ATR from the live price; "
+                               f"stop is {abs(float(sc['entry']) - float(sc['stop_loss'])) / ctx['atr']:.1f} ATR wide.")
+                except (KeyError, TypeError, ValueError):
+                    pass
+            if sc.get('trigger'):
+                st.markdown(f"**Take it when:** {sc['trigger']}")
+            if sc.get('invalidation'):
+                st.markdown(f"**Invalid if:** {sc['invalidation']}")
+            for reason in sc.get('reasoning') or []:
+                st.markdown(f"- {reason}")
+            for problem in sc['problems']:
+                st.error(f"Check this level: {problem}")
+
+    levels = res.get('key_levels') or []
+    if levels:
+        st.markdown("**Key levels**")
+        st.dataframe(pd.DataFrame(levels), hide_index=True, width="stretch")
+    if res.get('patterns'):
+        st.markdown("**Patterns:** " + "; ".join(map(str, res['patterns'])))
+    for warning in res.get('warnings') or []:
+        st.warning(warning)
+    st.caption("Size the position from the stop distance (risk a fixed % of equity), and skip the trade if the "
+               "levels don't match your own chart.")
+
+
+# ============================================================================
 # UI
 # ============================================================================
 def sidebar(running, connected, account):
@@ -1581,7 +1874,15 @@ def controls(runtime, s, connected, account):
                 else:
                     armed = st.checkbox(f"Arm live orders on {label} account #{account.login}")
             elif not live:
-                st.info("Paper mode uses live MT5 prices and enforces stops and targets, but never sends an order.")
+                st.info("Paper mode uses live MT5 prices and enforces stops and targets, but never sends an order. "
+                        "Choose Live for the bot to place real orders on MT5 automatically.")
+            if live and connected:
+                block = trading_permission()
+                if block:
+                    st.error(f"MT5 will refuse every order (retcode 10027): {block} You can still start - the bot "
+                             "trades as soon as this is fixed.")
+                else:
+                    st.success("MT5 accepts automated orders from this bot.")
         problems = []
         if not connected:
             problems.append("MT5 is not connected")
@@ -1846,11 +2147,11 @@ def main():
     connected = connected and account is not None
 
     st.title("TradePilot Super Bot")
-    st.caption("Rule-based, multi-strategy auto-execution on MetaTrader 5. No AI. Not financial advice - "
-               "backtest, then paper, then demo, before any real money.")
+    st.caption("Rule-based, multi-strategy auto-execution on MetaTrader 5 (the trading engine uses no AI; the Chart "
+               "analyzer tab does). Not financial advice - backtest, then paper, then demo, before any real money.")
 
     s = sidebar(running, connected, account)
-    tabs = st.tabs(["Dashboard", "Scanner", "Backtest", "Journal", "Strategy library"])
+    tabs = st.tabs(["Dashboard", "Scanner", "Chart analyzer", "Backtest", "Journal", "Strategy library"])
     with tabs[0]:
         controls(runtime, s, connected, account)
         st.divider()
@@ -1858,10 +2159,12 @@ def main():
     with tabs[1]:
         tab_scanner(s, connected)
     with tabs[2]:
-        tab_backtest(s, connected)
+        tab_chart_analyzer(connected)
     with tabs[3]:
-        tab_journal()
+        tab_backtest(s, connected)
     with tabs[4]:
+        tab_journal()
+    with tabs[5]:
         tab_library()
 
 
