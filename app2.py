@@ -19,12 +19,14 @@ Run:  streamlit run app2.py   (can run next to app.py: streamlit run app2.py --s
 from __future__ import annotations
 
 import json
-import logging
+import sys
 import threading
 import time
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta
-from logging.handlers import RotatingFileHandler
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))   # so `import app` works however this is launched
 
 import numpy as np
 import pandas as pd
@@ -39,19 +41,7 @@ STATS_REFRESH_SECONDS = 3600      # re-rank the strategies on each symbol once a
 PLAN_MAX_AGE_HOURS = 48           # an unresolved plan is marked expired after this
 
 
-def _get_logger():
-    logger = logging.getLogger("advisor")
-    if not logger.handlers:
-        core.DATA_DIR.mkdir(exist_ok=True)
-        handler = RotatingFileHandler(ADVISOR_LOG, maxBytes=1_000_000, backupCount=2, encoding="utf-8")
-        handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
-        logger.addHandler(handler)
-        logger.setLevel(logging.INFO)
-        logger.propagate = False
-    return logger
-
-
-log = _get_logger()
+log = core.attach_file_log("advisor", ADVISOR_LOG, 1_000_000)
 
 
 # ============================================================================
@@ -272,7 +262,12 @@ class Advisor:
             return None
         definition, st_, dg = core.STRATEGIES[c['key']], c['stats'], info.digits
         now = datetime.now()
-        pip = info.point * (10 if dg in (3, 5) else 1)
+        risk, reward = float(plan.risk), abs(float(plan.tp) - float(plan.entry))
+        if dg in (3, 5):    # forex quotes: show pips; metals/indices/crypto: show the price distance
+            pip = info.point * 10
+            risk_txt, reward_txt = f"{risk / pip:.1f} pips", f"{reward / pip:.1f} pips"
+        else:
+            risk_txt, reward_txt = f"{risk:.{dg}f}", f"{reward:.{dg}f}"
         return {
             'id': int(now.timestamp() * 1000), 'issued': now.strftime("%Y-%m-%d %H:%M:%S"),
             'issued_epoch': now.timestamp(), 'valid_until': (now + timedelta(minutes=self.s.interval_minutes)).strftime("%H:%M"),
@@ -280,12 +275,11 @@ class Advisor:
             'strategy': definition.name, 'strategy_key': c['key'], 'rule': definition.rule, 'reason': sig.reason,
             'agreeing': [core.STRATEGIES[k].name for k in c['agree']], 'votes': c['votes'],
             'htf_trend': {1: 'up', -1: 'down', 0: 'flat'}.get(self.symbol_state.get(sym, {}).get('htf_trend'), '?'),
-            'entry': round(plan.entry, dg), 'sl': round(plan.sl, dg), 'tp': round(plan.tp, dg),
-            'rr': round((plan.tp - plan.entry) * sig.direction / plan.risk, 2),
-            'risk_pips': round(plan.risk / pip, 1), 'reward_pips': round(abs(plan.tp - plan.entry) / pip, 1),
-            'digits': dg, 'bt_trades': st_['trades'], 'bt_win_rate': round(st_['win_rate'], 1),
-            'bt_expectancy': round(st_['expectancy'], 2),
-            'bt_profit_factor': round(st_['profit_factor'], 2) if np.isfinite(st_['profit_factor']) else None,
+            'entry': round(float(plan.entry), dg), 'sl': round(float(plan.sl), dg), 'tp': round(float(plan.tp), dg),
+            'rr': round(reward / risk, 2), 'risk_txt': risk_txt, 'reward_txt': reward_txt,
+            'digits': dg, 'bt_trades': int(st_['trades']), 'bt_win_rate': round(float(st_['win_rate']), 1),
+            'bt_expectancy': round(float(st_['expectancy']), 2),
+            'bt_profit_factor': round(float(st_['profit_factor']), 2) if np.isfinite(st_['profit_factor']) else None,
             'status': 'open', 'result_r': None, 'closed': None,
         }
 
@@ -402,8 +396,8 @@ def plan_card(p):
                    + (f" ({p['live_r']:+.2f}R now)" if p['status'] == 'open' and p.get('live_r') is not None else ""))
         m = st.columns(4)
         m[0].metric("Entry (market)", f"{p['entry']:.{dg}f}")
-        m[1].metric("Stop loss", f"{p['sl']:.{dg}f}", f"-{p['risk_pips']} pips", delta_color="off")
-        m[2].metric("Take profit", f"{p['tp']:.{dg}f}", f"+{p['reward_pips']} pips", delta_color="off")
+        m[1].metric("Stop loss", f"{p['sl']:.{dg}f}", f"-{p['risk_txt']}", delta_color="off")
+        m[2].metric("Take profit", f"{p['tp']:.{dg}f}", f"+{p['reward_txt']}", delta_color="off")
         m[3].metric("Reward : risk", f"1 : {p['rr']:.2f}")
         st.markdown(f"**Why now:** {p['reason']}")
         st.markdown(f"**Rule:** {p['rule']}")

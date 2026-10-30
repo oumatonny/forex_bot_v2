@@ -97,6 +97,8 @@ SETTINGS_JSON = DATA_DIR / "settings.json"
 LOG_FILE = DATA_DIR / "bot.log"
 STRATEGIES_JSON = BASE_DIR / "strategies.json"
 
+PROFIT_TARGET_REASON = "profit target"   # close-reason prefix that keeps a setup alive for re-entry
+
 TRADE_FIELDS = ['mode', 'ticket', 'symbol', 'strategy', 'direction', 'lot', 'entry', 'exit',
                 'sl_initial', 'tp', 'open_time', 'close_time', 'pnl', 'r_multiple', 'reason']
 
@@ -104,16 +106,27 @@ MT5_LOCK = threading.RLock()
 FILE_LOCK = threading.Lock()
 
 
-def _get_logger():
-    logger = logging.getLogger("superbot")
-    if not logger.handlers:
-        DATA_DIR.mkdir(exist_ok=True)
-        handler = RotatingFileHandler(LOG_FILE, maxBytes=2_000_000, backupCount=3, encoding="utf-8")
-        handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
-        logger.addHandler(handler)
+def attach_file_log(name, path, max_bytes):
+    """Exactly one file handler per logger per process. Streamlit runs the script once per browser session,
+    concurrently, so a plain `if not logger.handlers` check races and every line got written twice."""
+    logger = logging.getLogger(name)
+    with getattr(logging, '_lock', None) or threading.RLock():
+        mine = [h for h in logger.handlers if getattr(h, 'baseFilename', None) == str(path)]
+        for extra in mine[1:]:
+            logger.removeHandler(extra)
+            extra.close()
+        if not mine:
+            path.parent.mkdir(exist_ok=True)
+            handler = RotatingFileHandler(path, maxBytes=max_bytes, backupCount=3, encoding="utf-8")
+            handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
+            logger.addHandler(handler)
         logger.setLevel(logging.INFO)
         logger.propagate = False
     return logger
+
+
+def _get_logger():
+    return attach_file_log("superbot", LOG_FILE, 2_000_000)
 
 
 log = _get_logger()
@@ -154,7 +167,9 @@ class Settings:
     trail_atr: float = 0.0           # 0 = off
     trail_start_r: float = 1.0
     max_bars_held: int = 0           # 0 = off
-    quick_profit: float = 0.0        # account currency, 0 = off (legacy "any green" exit)
+    quick_profit: float = 10.0       # close each trade at this profit in account currency, 0 = off
+    reenter_in_range: bool = True    # after a profit-target close, re-enter while price is inside the signal's SL..TP
+    max_reentries: int = 20          # per setup, 0 = unlimited
     exit_on_opposite: bool = True
     # filters
     session_start: int = 0           # broker server hours
@@ -741,6 +756,8 @@ def trading_permission():
     term, account = mt('terminal_info'), mt('account_info')
     if term is None or account is None:
         return "cannot read terminal/account info from MT5"
+    if not getattr(term, 'connected', True):
+        return "the MT5 terminal has lost its connection to the broker server (reconnecting)."
     if not term.trade_allowed:
         return ("Algo Trading is switched OFF in the MT5 terminal. Click the 'Algo Trading' button on the MT5 "
                 "toolbar so it turns green (or Tools > Options > Expert Advisors > tick 'Allow algorithmic trading').")
@@ -748,7 +765,10 @@ def trading_permission():
         return ("MT5 is blocking trades from Python. In Tools > Options > Expert Advisors untick "
                 "'Disable algorithmic trading via external Python API'.")
     if not account.trade_allowed:
-        return "trading is not allowed on this login (investor / read-only password?)."
+        # Seen briefly while the broker connection drops/re-syncs and over the daily server break; only a
+        # block that never clears points at a read-only (investor) login.
+        return ("the broker is not accepting trades on this account right now (connection re-syncing or server "
+                "break; if it never clears, the login is read-only/investor).")
     if not getattr(account, 'trade_expert', True):
         return "the broker does not allow automated trading on this account."
     return None
@@ -932,7 +952,11 @@ class Engine:
         self.last_error = None
         self.server_time = None
         self.trade_block = None           # live: why MT5 would refuse orders right now (None = allowed)
+        self.block_since = 0.0
+        self.block_reported = False
         self.retry_entries = {}           # sym -> (key, sig, votes, atr, bar) refused only because trading was off
+        self.setups = {}                  # sym -> active signal range (SL..TP) that is re-entered after profit closes
+        self.reanalyse = set()            # symbols whose setup hit TP: evaluate again without waiting for a new bar
         self.state_file = DATA_DIR / f"state_{settings.mode}.json"
 
     # ---- lifecycle ---------------------------------------------------------
@@ -1011,6 +1035,7 @@ class Engine:
         self.opened_today = raw.get('opened_today', 0)
         self.cooldown_until = raw.get('cooldown_until', {})
         self.paper_seq = raw.get('paper_seq', 1)
+        self.setups = raw.get('setups', {})
         if self.day:
             self._load_closed_today()
         if self.positions:
@@ -1022,7 +1047,7 @@ class Engine:
                 'positions': [asdict(p) for p in self.positions.values()],
                 'day': self.day, 'day_start_equity': self.day_start_equity, 'day_halt': self.day_halt,
                 'opened_today': self.opened_today, 'cooldown_until': self.cooldown_until,
-                'paper_seq': self.paper_seq,
+                'paper_seq': self.paper_seq, 'setups': self.setups,
             })
 
     def _load_closed_today(self):
@@ -1053,6 +1078,7 @@ class Engine:
         self._manage()
         self._check_halts()
         self._friday_cutoff()
+        self._run_setups()
         for sym in self.symbols:
             bar_time = last_closed_bar_time(sym, self.s.timeframe)
             if bar_time is not None and bar_time != self.last_bar.get(sym):
@@ -1091,13 +1117,18 @@ class Engine:
         if not self.live:
             return
         block = trading_permission()
-        if block != self.trade_block:
-            if block:
-                self._note('ENGINE', '', 'WARN', f"live orders will be refused: {block}")
-            else:
-                self._note('ENGINE', '', 'INFO', "MT5 accepts automated orders again")
+        # Entries pause the moment a block appears, but it is only reported once it has lasted a while:
+        # broker reconnects flip these flags for a few seconds at a time.
+        if block and not self.trade_block:
+            self.block_since, self.block_reported = time.time(), False
+        if block and not self.block_reported and time.time() - self.block_since >= 15:
+            self.block_reported = True
+            self._note('ENGINE', '', 'WARN', f"live orders will be refused: {block}")
+        if not block and self.trade_block and self.block_reported:
+            self._note('ENGINE', '', 'INFO', f"MT5 accepts automated orders again (blocked for "
+                                             f"{time.time() - self.block_since:.0f}s)")
         self.trade_block = block
-        if block:
+        if block and self.block_reported:
             self.last_error = f"Live orders are blocked - {block} The bot keeps scanning and will trade as soon as this is fixed."
         elif self.last_error and self.last_error.startswith("Live orders are blocked"):
             self.last_error = None
@@ -1231,10 +1262,24 @@ class Engine:
             return self._note(sym, key, 'SKIPPED', f"{side}: {why}")
         if spread > self.s.max_spread_frac * plan.risk:
             return self._note(sym, key, 'BLOCKED', f"{side}: spread is {spread / plan.risk:.0%} of the stop distance")
+        pos = self._place(sym, key, sig.direction, plan, info, account, f"votes {votes} | {sig.reason}",
+                          retry=(key, sig, votes, atr))
+        if pos is None:
+            return
+        with self.lock:
+            self.opened_today += 1
+            # The signal's SL-TP range becomes a setup: after each profit-target close the bot
+            # re-enters while price is still inside it (see _run_setups).
+            self.setups[sym] = {'strategy': key, 'direction': sig.direction, 'sl': plan.sl, 'tp': plan.tp,
+                                'reentries': 0, 'awaiting': False, 'started': pos.open_time}
+        self._save_state()
 
+    def _place(self, sym, key, direction, plan, info, account, detail, retry=None):
+        """Sizes, checks margin, sends (or paper-fills) one position. Returns the Position or None."""
+        side = 'BUY' if direction == 1 else 'SELL'
         equity = min(account.balance, account.equity)
         budget = equity * self.s.risk_pct / 100
-        loss_per_lot = -calc_pnl(sym, info, sig.direction, 1.0, plan.entry, plan.sl)
+        loss_per_lot = -calc_pnl(sym, info, direction, 1.0, plan.entry, plan.sl)
         if loss_per_lot <= 0:
             return self._note(sym, key, 'BLOCKED', f"{side}: could not price the risk per lot")
         lot = round_lot_down(budget / loss_per_lot, info)
@@ -1246,7 +1291,7 @@ class Engine:
                                   f"above the {self.s.max_risk_pct}% cap")
             lot = info.volume_min
         risk_money = lot * loss_per_lot
-        order_type = mt5.ORDER_TYPE_BUY if sig.direction == 1 else mt5.ORDER_TYPE_SELL
+        order_type = mt5.ORDER_TYPE_BUY if direction == 1 else mt5.ORDER_TYPE_SELL
 
         if self.live:
             margin = mt('order_calc_margin', order_type, sym, float(lot), float(plan.entry))
@@ -1256,8 +1301,8 @@ class Engine:
             if result is None:
                 if message.startswith(f"retcode {getattr(mt5, 'TRADE_RETCODE_CLIENT_DISABLES_AT', 10027)}"):
                     self.trade_block = trading_permission()
-                    if self.trade_block:    # only retry when we can see it being switched back on
-                        self.retry_entries[sym] = (key, sig, votes, atr, self.last_bar.get(sym))
+                    if self.trade_block and retry:    # only retry when we can see it being switched back on
+                        self.retry_entries[sym] = (*retry, self.last_bar.get(sym))
                 return self._note(sym, key, 'REJECTED', f"{side} {lot}: {message}")
             ticket, fill = int(result.order), float(result.price or plan.entry)
             found = mt('positions_get', ticket=ticket)
@@ -1269,17 +1314,77 @@ class Engine:
             ticket, fill = self.paper_seq, plan.entry
             self.paper_seq += 1
 
-        pos = Position(ticket=ticket, symbol=sym, direction=sig.direction, lot=lot, entry=fill, sl=plan.sl,
+        pos = Position(ticket=ticket, symbol=sym, direction=direction, lot=lot, entry=fill, sl=plan.sl,
                        tp=plan.tp, sl_initial=plan.sl, init_risk=abs(fill - plan.sl) or plan.risk,
                        risk_money=risk_money, strategy=key,
                        open_time=self.server_time.isoformat(sep=' ', timespec='seconds'),
                        open_epoch=time.time(), price=fill)
         with self.lock:
             self.positions[ticket] = pos
-            self.opened_today += 1
         self._save_state()
         self._note(sym, key, 'OPENED', f"{side} {lot} @ {fill:.{info.digits}f} | SL {plan.sl:.{info.digits}f} | "
-                                       f"TP {plan.tp:.{info.digits}f} | risk {risk_money:.2f} | votes {votes} | {sig.reason}")
+                                       f"TP {plan.tp:.{info.digits}f} | risk {risk_money:.2f} | {detail}")
+        return pos
+
+    # ---- setups: re-enter inside the SL-TP range after each profit close ----
+    def _end_setup(self, sym, why):
+        setup = self.setups.pop(sym, None)
+        if setup:
+            self._note(sym, setup['strategy'], 'INFO', f"setup finished after {setup['reentries']} re-entr"
+                                                        f"{'y' if setup['reentries'] == 1 else 'ies'}: {why}")
+            self._save_state()
+        return setup
+
+    def _run_setups(self):
+        """For every setup whose last trade closed at the profit target: re-enter at once while price is
+        still between the setup's SL and TP; once TP is reached, analyse the chart again straight away."""
+        for sym in list(self.reanalyse):
+            self.reanalyse.discard(sym)
+            self._note(sym, '', 'INFO', "TP hit - analysing the chart again for the next trade")
+            self._evaluate(sym, trade=True)
+        for sym, setup in list(self.setups.items()):
+            if not setup['awaiting']:
+                continue
+            with self.lock:
+                if any(p.symbol == sym for p in self.positions.values()):
+                    continue        # previous trade still closing
+            tick, info, account = mt('symbol_info_tick', sym), mt('symbol_info', sym), mt('account_info')
+            if tick is None or info is None or account is None:
+                continue
+            d, key = setup['direction'], setup['strategy']
+            entry, exit_px = (tick.ask, tick.bid) if d == 1 else (tick.bid, tick.ask)
+            if (exit_px - setup['tp']) * d >= 0:
+                self._end_setup(sym, "price reached the TP")
+                self.reanalyse.add(sym)     # analysed at the start of the next cycle
+                continue
+            if (exit_px - setup['sl']) * d <= 0:
+                self._end_setup(sym, "price fell back to the SL level")
+                continue
+            if 0 < self.s.max_reentries <= setup['reentries']:
+                self._end_setup(sym, f"{self.s.max_reentries} re-entries (limit)")
+                continue
+            if self.live and self.trade_block:
+                continue        # wait for Algo Trading to come back on
+            block = self._entry_block(sym, info)
+            if block:
+                self._end_setup(sym, f"re-entry blocked: {block}")
+                continue
+            risk = (entry - setup['sl']) * d
+            spread = tick.ask - tick.bid
+            if risk <= spread or spread > self.s.max_spread_frac * risk:
+                continue        # too close to the SL / spread spike: check again next cycle
+            if time.time() < setup.get('retry_after', 0):
+                continue
+            plan = Plan(entry, setup['sl'], setup['tp'], risk)
+            n = setup['reentries'] + 1
+            if self._place(sym, key, d, plan, info, account, f"re-entry {n} inside the setup range") is not None:
+                setup.update(reentries=n, awaiting=False, failures=0)
+            else:
+                setup['failures'] = setup.get('failures', 0) + 1
+                setup['retry_after'] = time.time() + 30
+                if setup['failures'] >= 3:
+                    self._end_setup(sym, "re-entry failed 3 times")
+            self._save_state()
 
     # ---- position management ----------------------------------------------
     def _manage(self):
@@ -1320,7 +1425,7 @@ class Engine:
             if pos.pending_reason or time.time() < pos.retry_after:
                 continue
             if self.s.quick_profit > 0 and pos.pnl >= self.s.quick_profit:
-                self._close(pos, f"quick profit >= {self.s.quick_profit}")
+                self._close(pos, f"{PROFIT_TARGET_REASON} {self.s.quick_profit:g}")
                 continue
             if self.s.max_bars_held > 0 and time.time() - pos.open_epoch >= self.s.max_bars_held * TF_SECONDS[self.s.timeframe]:
                 self._close(pos, "time stop")
@@ -1361,17 +1466,28 @@ class Engine:
         info = mt('symbol_info', pos.symbol)
         if info is None:
             return
-        new_sl = round(new_sl, info.digits)
+        new_sl = float(round(float(new_sl), info.digits))
         if self.live:
-            if abs(pos.price - new_sl) < (getattr(info, 'trade_stops_level', 0) or 0) * info.point:
+            if self.trade_block:
+                return          # MT5 would refuse it; try again once trading is allowed
+            tick = mt('symbol_info_tick', pos.symbol)
+            if tick is None:
                 return
-            request = {"action": mt5.TRADE_ACTION_SLTP, "symbol": pos.symbol, "position": int(pos.ticket),
-                       "sl": new_sl, "tp": float(pos.tp)}
-            result = mt('order_send', request)
+            # A buy's stop triggers on the bid, a sell's on the ask; it must sit beyond the stops/freeze distance.
+            trigger = tick.bid if pos.direction == 1 else tick.ask
+            gap = max(getattr(info, 'trade_stops_level', 0) or 0, getattr(info, 'trade_freeze_level', 0) or 0) * info.point
+            if (trigger - new_sl) * pos.direction <= gap:
+                return
+            request = {"action": mt5.TRADE_ACTION_SLTP, "symbol": str(pos.symbol), "position": int(pos.ticket),
+                       "sl": new_sl, "tp": float(round(float(pos.tp or 0.0), info.digits)), "magic": BOT_MAGIC}
+            with MT5_LOCK:
+                result = mt5.order_send(request)
+                last_error = mt5.last_error() if result is None else None
             if result is None or result.retcode != mt5.TRADE_RETCODE_DONE:
                 pos.retry_after = time.time() + 30
-                return self._note(pos.symbol, pos.strategy, 'WARN',
-                                  f"#{pos.ticket} stop move rejected: {getattr(result, 'comment', 'no result')}")
+                why = (f"retcode {result.retcode}: {result.comment}" if result is not None
+                       else f"order_send returned None, MT5 last_error {last_error}")
+                return self._note(pos.symbol, pos.strategy, 'WARN', f"#{pos.ticket} stop move to {new_sl} rejected: {why}")
         pos.sl = new_sl
         if why == "break-even":
             pos.be_done = True
@@ -1406,8 +1522,15 @@ class Engine:
             return self._record_close(pos, pos.price, pos.pnl, (pos.pending_reason or "closed at broker") + " (P&L unverified)")
         pnl = sum(x.profit + x.commission + x.swap + getattr(x, 'fee', 0.0) for x in deals)
         reasons = {getattr(mt5, 'DEAL_REASON_SL', 4): 'SL', getattr(mt5, 'DEAL_REASON_TP', 5): 'TP',
-                   getattr(mt5, 'DEAL_REASON_SO', 6): 'STOP-OUT'}
-        reason = pos.pending_reason or reasons.get(exits[-1].reason, 'closed outside the bot')
+                   getattr(mt5, 'DEAL_REASON_SO', 6): 'STOP-OUT',
+                   getattr(mt5, 'DEAL_REASON_CLIENT', 0): 'closed manually in MT5 (desktop)',
+                   getattr(mt5, 'DEAL_REASON_MOBILE', 1): 'closed manually in MT5 (mobile)',
+                   getattr(mt5, 'DEAL_REASON_WEB', 2): 'closed manually in MT5 (web)',
+                   getattr(mt5, 'DEAL_REASON_EXPERT', 3): 'closed by another EA/script'}
+        reason = reasons.get(exits[-1].reason, 'closed outside the bot')
+        if exits[-1].reason == getattr(mt5, 'DEAL_REASON_EXPERT', 3) and getattr(exits[-1], 'magic', 0) == BOT_MAGIC:
+            reason = 'closed by this bot'
+        reason = pos.pending_reason or reason
         self._record_close(pos, exits[-1].price, pnl, reason)
 
     def _record_close(self, pos, exit_price, pnl, reason):
@@ -1426,6 +1549,16 @@ class Engine:
                 self.cooldown_until[pos.symbol] = time.time() + self.s.cooldown_bars * TF_SECONDS[self.s.timeframe]
         self._save_state()
         self._note(pos.symbol, pos.strategy, 'CLOSED', f"#{pos.ticket} {reason} | P&L {pnl:.2f} ({r_multiple:+.2f}R)")
+        setup = self.setups.get(pos.symbol)
+        if setup and setup['strategy'] == pos.strategy and setup['direction'] == pos.direction:
+            if reason.startswith(PROFIT_TARGET_REASON) and self.s.reenter_in_range:
+                setup['awaiting'] = True            # _run_setups re-enters on this same cycle
+                self._save_state()
+            elif reason == 'TP':
+                self._end_setup(pos.symbol, "TP hit")
+                self.reanalyse.add(pos.symbol)
+            else:
+                self._end_setup(pos.symbol, reason)
 
     def _flatten_all(self, reason):
         with self.lock:
@@ -1452,6 +1585,10 @@ class Engine:
                 'floating': sum(p.pnl for p in self.positions.values()), 'day': self.day,
                 'day_start_equity': self.day_start_equity, 'last_cycle': self.last_cycle,
                 'last_error': self.last_error, 'server_time': self.server_time,
+                'setups': [{'symbol': sym, 'side': 'BUY' if v['direction'] == 1 else 'SELL', 'strategy': v['strategy'],
+                            'SL': v['sl'], 'TP': v['tp'], 're-entries': v['reentries'],
+                            'state': 're-entering' if v['awaiting'] else 'in trade', 'since': v['started']}
+                           for sym, v in self.setups.items()],
             }
 
 
@@ -1829,9 +1966,22 @@ def sidebar(running, connected, account):
             trail_start_r = st.slider("Start trailing at (R)", 0.0, 3.0, saved.trail_start_r, 0.1, disabled=lock)
             max_bars_held = st.number_input("Time stop (bars, 0 = off)", 0, 500, saved.max_bars_held, disabled=lock)
             exit_on_opposite = st.checkbox("Close on the opposite signal from the same strategy", saved.exit_on_opposite, disabled=lock)
-            quick_profit = st.number_input("Quick-profit exit (account currency, 0 = off)", 0.0, 10000.0, saved.quick_profit, 0.1, disabled=lock,
-                                           help="The older bots' 'close at any small profit' rule. Off by default: taking "
-                                                "cents while risking a full stop needs a very high win rate to break even.")
+        with st.expander("Profit target and re-entry", expanded=True):
+            quick_profit = st.number_input("Close each trade at this profit (account currency, 0 = off)", 0.0, 100000.0,
+                                           saved.quick_profit, 1.0, disabled=lock,
+                                           help="Closes a trade as soon as its floating profit reaches this amount, "
+                                                "without waiting for the TP.")
+            reenter = st.checkbox("Re-enter straight away while price is still between the SL and TP", saved.reenter_in_range,
+                                  disabled=lock or quick_profit <= 0,
+                                  help="After a profit-target close the bot opens the same trade again with the same SL "
+                                       "and TP. When price reaches the TP the chart is analysed again for a new trade; "
+                                       "if it falls back to the SL level the setup ends.")
+            max_reentries = st.number_input("Max re-entries per setup (0 = unlimited)", 0, 500, saved.max_reentries,
+                                            disabled=lock or quick_profit <= 0 or not reenter)
+            if quick_profit > 0:
+                st.caption("Each trade still risks the full risk-per-trade to its SL. Check the risk per trade in the "
+                           "decision feed against this target: if a loss costs far more than the target pays, a single "
+                           "SL hit undoes many wins.")
 
         with st.expander("Filters"):
             max_spread_frac = st.slider("Max spread (fraction of stop distance)", 0.02, 0.5, saved.max_spread_frac, 0.01, disabled=lock)
@@ -1848,6 +1998,7 @@ def sidebar(running, connected, account):
         cooldown_bars=int(cooldown_bars), rr=rr, min_rr=min_rr, use_strategy_target=use_target, min_sl_atr=min_sl_atr,
         max_sl_atr=max_sl_atr, max_spread_frac=max_spread_frac, be_at_r=be_at_r, trail_atr=trail_atr,
         trail_start_r=trail_start_r, max_bars_held=int(max_bars_held), quick_profit=quick_profit,
+        reenter_in_range=reenter, max_reentries=int(max_reentries),
         exit_on_opposite=exit_on_opposite, session_start=session_start, session_end=session_end,
         friday_close_hour=friday_hour if friday else -1, poll_seconds=saved.poll_seconds, deviation=saved.deviation,
     )
@@ -1953,6 +2104,10 @@ def live_panel(runtime):
         st.dataframe(pd.DataFrame(snap['positions']), hide_index=True, width="stretch")
     else:
         st.caption("None.")
+
+    if snap.get('setups'):      # .get: an engine started by older code has no setups
+        st.subheader("Active setups (re-entered after each profit close until TP or SL)")
+        st.dataframe(pd.DataFrame(snap['setups']), hide_index=True, width="stretch")
 
     st.subheader("Symbols")
     rows = [{'symbol': sym, 'last closed bar': v.get('bar', ''), 'close': v.get('close'),

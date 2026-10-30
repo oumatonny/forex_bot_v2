@@ -9795,3 +9795,67 @@
 2026-10-29 19:20:02,157 INFO NZDUSD | smc | SKIPPED | smc SELL dropped: HTF trend is flat
 2026-10-29 19:20:02,588 INFO USDJPY | smc | SKIPPED | smc BUY dropped: HTF trend is flat
 2026-10-29 19:20:02,588 INFO USDJPY | smc | SKIPPED | smc BUY dropped: HTF trend is flat
+2026-10-29 19:40:02,420 INFO USDJPY | trend_pullback | SKIPPED | trend_pullback SELL dropped: HTF trend is flat
+2026-10-29 19:40:02,420 INFO USDJPY | trend_pullback | SKIPPED | trend_pullback SELL dropped: HTF trend is flat
+2026-10-29 20:00:00,888 INFO USDJPY | smc | SKIPPED | smc SELL dropped: HTF trend is flat
+2026-10-29 20:00:00,888 INFO USDJPY | smc | SKIPPED | smc SELL dropped: HTF trend is flat
+2026-10-29 20:05:01,484 INFO XAUUSD | smc | OPENED | SELL 2.5 @ 4017.59 | SL 4020.45 | TP 4012.92 | risk 752.83 | votes 1 | Swept buy-side liquidity and closed back below the swing high
+2026-10-29 20:05:01,484 INFO XAUUSD | smc | OPENED | SELL 2.5 @ 4017.59 | SL 4020.45 | TP 4012.92 | risk 752.83 | votes 1 | Swept buy-side liquidity and closed back below the swing high
+2026-10-29 20:05:01,619 INFO GBPUSD | trend_pullback | SKIPPED | trend_pullback BUY dropped: HTF trend is flat
+2026-10-29 20:05:01,619 INFO GBPUSD | trend_pullback | SKIPPED | trend_pullback BUY dropped: HTF trend is flat
+2026-10-29 20:05:01,664 INFO NZDUSD | smc | SKIPPED | smc SELL dropped: HTF trend is flat
+2026-10-29 20:05:01,664 INFO NZDUSD | smc | SKIPPED | smc SELL dropped: HTF trend is flat
+2026-10-29 20:05:44,020 INFO XAUUSD | smc | CLOSED | #11163703784 SL | P&L -715.00 (-0.95R)
+2026-10-29 20:05:44,020 INFO XAUUSD | smc | CLOSED | #11163703784 SL | P&L -715.00 (-0.95R)
+2026-10-29 20:10:02,734 INFO USDCAD | smc | OPENED | SELL 13.77 @ 1.39702 | SL 1.39777 | TP 1.39587 | risk 749.50 | votes 1 | Retraced into a bearish FVG after a break of structure
+2026-10-29 20:10:02,734 INFO USDCAD | smc | OPENED | SELL 13.77 @ 1.39702 | SL 1.39777 | TP 1.39587 | risk 749.50 | votes 1 | Retraced into a bearish FVG after a break of structure
+2026-10-29 20:15:00,830 INFO AUDUSD | smc | SKIPPED | smc SELL dropped: HTF trend is flat
+2026-10-29 20:15:00,830 INFO AUDUSD | smc | SKIPPED | smc SELL dropped: HTF trend is flat
+2026-10-29 20:15:00,866 INFO EURUSD | smc | SKIPPED | smc SELL dropped: HTF trend is flat
+2026-10-29 20:15:00,866 INFO EURUSD | smc | SKIPPED | smc SELL dropped: HTF trend is flat
+2026-10-29 20:15:00,958 INFO NZDUSD | smc | SKIPPED | smc SELL dropped: HTF trend is flat
+2026-10-29 20:15:00,958 INFO NZDUSD | smc | SKIPPED | smc SELL dropped: HTF trend is flat
+2026-10-29 20:29:57,060 INFO ENGINE |  | WARN | live orders will be refused: trading is not allowed on this login (investor / read-only password?).
+2026-10-29 20:29:57,060 INFO ENGINE |  | WARN | live orders will be refused: trading is not allowed on this login (investor / read-only password?).
+2026-10-29 20:30:01,072 INFO ENGINE |  | INFO | MT5 accepts automated orders again
+2026-10-29 20:30:01,072 INFO ENGINE |  | INFO | MT5 accepts automated orders again
+2026-10-29 20:30:03,961 INFO XAUUSD | trend_pullback | OPENED | SELL 1.02 @ 4019.88 | SL 4026.91 | TP 4008.69 | risk 743.56 | votes 1 | Downtrend pullback to EMA20, resumed
+2026-10-29 20:30:03,961 INFO XAUUSD | trend_pullback | OPENED | SELL 1.02 @ 4019.88 | SL 4026.91 | TP 4008.69 | risk 743.56 | votes 1 | Downtrend pullback to EMA20, resumed
+2026-10-29 20:30:04,343 INFO EURUSD | smc | SKIPPED | smc SELL dropped: HTF trend is flat
+2026-10-29 20:30:04,343 INFO EURUSD | smc | SKIPPED | smc SELL dropped: HTF trend is flat
+2026-10-29 23:34:51,999 INFO ENGINE |  | WARN | live orders will be refused: trading is not allowed on this login (investor / read-only password?).
+2026-10-29 23:34:51,999 INFO ENGINE |  | WARN | live orders will be refused: trading is not allowed on this login (investor / read-only password?).
+2026-10-30 02:51:30,515 INFO ENGINE |  | INFO | MT5 accepts automated orders again
+2026-10-30 02:51:30,515 INFO ENGINE |  | INFO | MT5 accepts automated orders again
+2026-10-30 02:51:30,525 INFO USDCAD | smc | CLOSED | #11163790448 SL | P&L -738.86 (-0.99R)
+2026-10-30 02:51:30,525 INFO USDCAD | smc | CLOSED | #11163790448 SL | P&L -738.86 (-0.99R)
+2026-10-30 02:51:30,528 INFO XAUUSD | trend_pullback | CLOSED | #11164036678 TP | P&L 1122.00 (+1.51R)
+2026-10-30 02:51:30,528 INFO XAUUSD | trend_pullback | CLOSED | #11164036678 TP | P&L 1122.00 (+1.51R)
+2026-10-30 02:51:35,685 INFO ENGINE |  | WARN | live orders will be refused: trading is not allowed on this login (investor / read-only password?).
+2026-10-30 02:51:35,685 INFO ENGINE |  | WARN | live orders will be refused: trading is not allowed on this login (investor / read-only password?).
+2026-10-30 02:51:39,708 INFO ENGINE |  | INFO | MT5 accepts automated orders again
+2026-10-30 02:51:39,708 INFO ENGINE |  | INFO | MT5 accepts automated orders again
+2026-10-30 02:51:41,827 INFO ENGINE |  | WARN | live orders will be refused: trading is not allowed on this login (investor / read-only password?).
+2026-10-30 02:51:41,827 INFO ENGINE |  | WARN | live orders will be refused: trading is not allowed on this login (investor / read-only password?).
+2026-10-30 02:51:57,911 INFO ENGINE |  | INFO | MT5 accepts automated orders again
+2026-10-30 02:51:57,911 INFO ENGINE |  | INFO | MT5 accepts automated orders again
+2026-10-30 02:54:43,580 INFO ENGINE |  | WARN | live orders will be refused: trading is not allowed on this login (investor / read-only password?).
+2026-10-30 02:54:43,580 INFO ENGINE |  | WARN | live orders will be refused: trading is not allowed on this login (investor / read-only password?).
+2026-10-30 02:54:47,612 INFO ENGINE |  | INFO | MT5 accepts automated orders again
+2026-10-30 02:54:47,612 INFO ENGINE |  | INFO | MT5 accepts automated orders again
+2026-10-30 03:00:02,662 INFO XAUUSD | smc | OPENED | SELL 1.92 @ 4007.99 | SL 4011.80 | TP 4002.07 | risk 747.38 | votes 1 | Retraced into a bearish FVG after a break of structure
+2026-10-30 03:00:02,662 INFO XAUUSD | smc | OPENED | SELL 1.92 @ 4007.99 | SL 4011.80 | TP 4002.07 | risk 747.38 | votes 1 | Retraced into a bearish FVG after a break of structure
+2026-10-30 03:00:02,807 INFO EURUSD | smc | SKIPPED | smc SELL dropped: HTF trend is flat
+2026-10-30 03:00:02,807 INFO EURUSD | smc | SKIPPED | smc SELL dropped: HTF trend is flat
+2026-10-30 03:05:01,058 INFO NZDUSD | smc | SKIPPED | smc SELL dropped: HTF trend is flat
+2026-10-30 03:05:01,058 INFO NZDUSD | smc | SKIPPED | smc SELL dropped: HTF trend is flat
+2026-10-30 03:06:01,631 INFO XAUUSD | smc | WARN | #11167109636 stop move rejected: no result
+2026-10-30 03:06:01,631 INFO XAUUSD | smc | WARN | #11167109636 stop move rejected: no result
+2026-10-30 03:06:33,816 INFO XAUUSD | smc | WARN | #11167109636 stop move rejected: no result
+2026-10-30 03:06:33,816 INFO XAUUSD | smc | WARN | #11167109636 stop move rejected: no result
+2026-10-30 03:06:47,920 INFO XAUUSD | smc | CLOSED | #11167109636 closed outside the bot | P&L 750.72 (+1.00R)
+2026-10-30 03:06:47,920 INFO XAUUSD | smc | CLOSED | #11167109636 closed outside the bot | P&L 750.72 (+1.00R)
+2026-10-30 03:10:01,082 INFO AUDUSD | smc | SKIPPED | smc SELL dropped: HTF trend is flat
+2026-10-30 03:10:01,082 INFO AUDUSD | smc | SKIPPED | smc SELL dropped: HTF trend is flat
+2026-10-30 03:10:01,285 INFO USDJPY | bb_rsi_reversion | SKIPPED | SELL: target is only 0.21R, below the 1.0R minimum
+2026-10-30 03:10:01,285 INFO USDJPY | bb_rsi_reversion | SKIPPED | SELL: target is only 0.21R, below the 1.0R minimum
