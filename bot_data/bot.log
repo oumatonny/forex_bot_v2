@@ -9859,3 +9859,4 @@
 2026-10-30 03:10:01,082 INFO AUDUSD | smc | SKIPPED | smc SELL dropped: HTF trend is flat
 2026-10-30 03:10:01,285 INFO USDJPY | bb_rsi_reversion | SKIPPED | SELL: target is only 0.21R, below the 1.0R minimum
 2026-10-30 03:10:01,285 INFO USDJPY | bb_rsi_reversion | SKIPPED | SELL: target is only 0.21R, below the 1.0R minimum
+2026-11-03 07:17:49,137 INFO ENGINE |  | STARTED | live | EURUSD, GBPUSD, USDJPY, XAUUSD | M15 | 3 strategies

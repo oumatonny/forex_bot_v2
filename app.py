@@ -73,7 +73,7 @@ except ImportError:
 
 try:
     from dotenv import load_dotenv
-    load_dotenv()               # OPENROUTER_API_KEY / OPENROUTER_MODEL for the chart analyzer
+    load_dotenv()               # GEMINI_API_KEY / GEMINI_VISION_MODEL for the chart analyzer
 except ImportError:
     pass
 
@@ -1671,11 +1671,11 @@ def recent_signal_markers(d, keys, htf, use_htf, lookback=200):
 
 
 # ============================================================================
-# CHART IMAGE ANALYSIS (vision model via OpenRouter). Separate from the rule
+# CHART IMAGE ANALYSIS (vision model via Gemini). Separate from the rule
 # engine: it only gives a written plan and never sends an order.
 # ============================================================================
-OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
-DEFAULT_VISION_MODEL = "openai/gpt-4o"
+GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+DEFAULT_VISION_MODEL = "gemini-2.5-flash"
 
 CHART_SYSTEM_PROMPT = (
     "You are a disciplined professional forex/CFD price-action trader reviewing a screenshot of a chart. "
@@ -1698,8 +1698,8 @@ CHART_SYSTEM_PROMPT = (
 )
 
 
-def openrouter_key():
-    key = (st.session_state.get('openrouter_key') or os.environ.get("OPENROUTER_API_KEY") or "").strip().strip('"\'')
+def gemini_key():
+    key = (st.session_state.get('gemini_key') or os.environ.get("GEMINI_API_KEY") or "").strip().strip('"\'')
     return key or None
 
 
@@ -1707,29 +1707,44 @@ def call_vision_model(image_bytes, mime, user_text, model, api_key, timeout=90):
     """(content|None, error|None)"""
     if requests is None:
         return None, "The 'requests' package is not installed - run: pip install requests"
-    image_url = f"data:{mime};base64,{base64.b64encode(image_bytes).decode()}"
+    if not api_key:
+        return None, "GEMINI_API_KEY not set in environment."
+    if not model:
+        return None, "No Gemini vision model configured."
+    image_data = base64.b64encode(image_bytes).decode()
     payload = {
-        "model": model, "temperature": 0.2, "max_tokens": 1800, "stream": False,
-        "messages": [
-            {"role": "system", "content": CHART_SYSTEM_PROMPT},
-            {"role": "user", "content": [{"type": "text", "text": user_text},
-                                         {"type": "image_url", "image_url": {"url": image_url}}]},
-        ],
+        "systemInstruction": {"parts": [{"text": CHART_SYSTEM_PROMPT}]},
+        "contents": [{
+            "role": "user",
+            "parts": [
+                {"text": user_text},
+                {"inline_data": {"mime_type": mime, "data": image_data}},
+            ],
+        }],
+        "generationConfig": {
+            "temperature": 0.2,
+            "maxOutputTokens": 1800,
+            "responseMimeType": "application/json",
+        },
     }
-    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json",
-               "HTTP-Referer": "https://tradepilot.local", "X-OpenRouter-Title": "TradePilot Chart Analyzer"}
     try:
-        resp = requests.post(OPENROUTER_API_URL, headers=headers, json=payload, timeout=timeout)
+        resp = requests.post(
+            GEMINI_API_URL.format(model=model),
+            params={"key": api_key},
+            headers={"Content-Type": "application/json"},
+            json=payload,
+            timeout=timeout,
+        )
     except requests.exceptions.RequestException as exc:
-        return None, f"OpenRouter request failed: {exc}"
+        return None, f"Gemini request failed: {exc}"
     if resp.status_code == 401:
-        return None, "OpenRouter returned 401 - the API key is wrong, expired or revoked (openrouter.ai/keys)."
+        return None, "Gemini returned 401 - the API key is wrong, expired or revoked."
     if resp.status_code != 200:
-        return None, f"OpenRouter returned HTTP {resp.status_code}: {resp.text[:300]}"
+        return None, f"Gemini returned HTTP {resp.status_code}: {resp.text[:300]}"
     try:
-        return resp.json()["choices"][0]["message"]["content"], None
+        return resp.json()["candidates"][0]["content"]["parts"][0]["text"], None
     except (KeyError, IndexError, ValueError) as exc:
-        return None, f"Unexpected OpenRouter response: {exc}"
+        return None, f"Unexpected Gemini response: {exc}"
 
 
 def parse_chart_analysis(text):
@@ -1800,18 +1815,17 @@ def tab_chart_analyzer(connected):
         timeframe = st.selectbox("Timeframe (optional)", tf_options)
         notes = st.text_area("Anything else? (optional)", "", placeholder="e.g. I only trade with the H4 trend; "
                                                                             "the blue lines are my supply zones")
-        model = st.text_input("Vision model (OpenRouter)", os.environ.get("OPENROUTER_VISION_MODEL", DEFAULT_VISION_MODEL),
-                              help="Any OpenRouter model that accepts images, e.g. openai/gpt-4o, "
-                                   "anthropic/claude-sonnet-4.5, google/gemini-2.5-pro.")
-        if not os.environ.get("OPENROUTER_API_KEY"):
-            st.text_input("OpenRouter API key", type="password", key='openrouter_key',
-                          help="Or put OPENROUTER_API_KEY=... in a .env file next to app.py. Kept only for this session.")
-        api_key = openrouter_key()
+        model = st.text_input("Gemini vision model", os.environ.get("GEMINI_VISION_MODEL", DEFAULT_VISION_MODEL),
+                              help="A Gemini model that accepts images, such as gemini-2.5-flash or gemini-2.5-pro.")
+        if not os.environ.get("GEMINI_API_KEY"):
+            st.text_input("Gemini API key", type="password", key='gemini_key',
+                          help="Or put GEMINI_API_KEY=... in a .env file next to app.py. Kept only for this session.")
+        api_key = gemini_key()
         go_btn = st.button("Analyze chart", type="primary", width="stretch", disabled=upload is None or not api_key)
         if upload is None:
             st.caption("Upload a chart image to start.")
         elif not api_key:
-            st.caption("Add an OpenRouter API key to start.")
+            st.caption("Add a Gemini API key to start.")
 
     if go_btn:
         tf = None if timeframe.startswith("(") else timeframe
