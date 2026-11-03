@@ -1675,7 +1675,8 @@ def recent_signal_markers(d, keys, htf, use_htf, lookback=200):
 # engine: it only gives a written plan and never sends an order.
 # ============================================================================
 GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
-DEFAULT_VISION_MODEL = "gemini-2.5-flash"
+DEFAULT_VISION_MODEL = "gemini-3.8-flash"
+DEPRECATED_VISION_MODELS = {"gemini-2.5-flash"}
 
 CHART_SYSTEM_PROMPT = (
     "You are a disciplined professional forex/CFD price-action trader reviewing a screenshot of a chart. "
@@ -1701,6 +1702,11 @@ CHART_SYSTEM_PROMPT = (
 def gemini_key():
     key = (st.session_state.get('gemini_key') or os.environ.get("GEMINI_API_KEY") or "").strip().strip('"\'')
     return key or None
+
+
+def configured_vision_model():
+    model = os.environ.get("GEMINI_VISION_MODEL", DEFAULT_VISION_MODEL).strip()
+    return DEFAULT_VISION_MODEL if model in DEPRECATED_VISION_MODELS else model
 
 
 def call_vision_model(image_bytes, mime, user_text, model, api_key, timeout=90):
@@ -1815,8 +1821,8 @@ def tab_chart_analyzer(connected):
         timeframe = st.selectbox("Timeframe (optional)", tf_options)
         notes = st.text_area("Anything else? (optional)", "", placeholder="e.g. I only trade with the H4 trend; "
                                                                             "the blue lines are my supply zones")
-        model = st.text_input("Gemini vision model", os.environ.get("GEMINI_VISION_MODEL", DEFAULT_VISION_MODEL),
-                              help="A Gemini model that accepts images, such as gemini-2.5-flash or gemini-2.5-pro.")
+        model = st.text_input("Gemini vision model", configured_vision_model(),
+                              help="A Gemini model that accepts images, such as gemini-3.8-flash.")
         if not os.environ.get("GEMINI_API_KEY"):
             st.text_input("Gemini API key", type="password", key='gemini_key',
                           help="Or put GEMINI_API_KEY=... in a .env file next to app.py. Kept only for this session.")

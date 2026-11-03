@@ -6,7 +6,7 @@ The chart analyzer uses Gemini. Create a local `.env` file (it is ignored by Git
 
 ```env
 GEMINI_API_KEY=your-gemini-api-key
-GEMINI_VISION_MODEL=gemini-2.5-flash
+GEMINI_VISION_MODEL=gemini-3.8-flash
 ```
 
 Alternatively, enter the key in the chart analyzer field for the current session.
