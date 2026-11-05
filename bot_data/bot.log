@@ -9861,3 +9861,425 @@
 2026-10-30 03:10:01,285 INFO USDJPY | bb_rsi_reversion | SKIPPED | SELL: target is only 0.21R, below the 1.0R minimum
 2026-11-03 07:17:49,137 INFO ENGINE |  | STARTED | live | EURUSD, GBPUSD, USDJPY, XAUUSD | M15 | 3 strategies
 2026-11-03 07:28:34,697 INFO ENGINE |  | STARTED | live | EURUSD, GBPUSD, USDJPY, XAUUSD | M15 | 3 strategies
+2026-11-04 11:54:36,272 WARNING tick AI USDCAD: OpenRouter request failed: ("Connection broken: ConnectionResetError(10054, 'An existing connection was forcibly closed by the remote host', None, 10054, None)", ConnectionResetError(10054, 'An existing connection was forcibly closed by the remote host', None, 10054, None))
+2026-11-04 11:54:43,784 WARNING tick AI GBPUSD: OpenRouter request failed: ('Connection aborted.', ConnectionResetError(10054, 'An existing connection was forcibly closed by the remote host', None, 10054, None))
+2026-11-04 11:54:50,989 WARNING tick AI NZDUSD: OpenRouter request failed: ('Connection aborted.', ConnectionResetError(10054, 'An existing connection was forcibly closed by the remote host', None, 10054, None))
+2026-11-04 11:54:53,830 WARNING tick AI EURUSD: OpenRouter request failed: ('Connection aborted.', ConnectionResetError(10054, 'An existing connection was forcibly closed by the remote host', None, 10054, None))
+2026-11-04 11:54:56,965 WARNING tick AI USDCAD: OpenRouter request failed: ('Connection aborted.', ConnectionResetError(10054, 'An existing connection was forcibly closed by the remote host', None, 10054, None))
+2026-11-04 11:55:04,740 WARNING tick AI GBPUSD: OpenRouter request failed: ('Connection aborted.', ConnectionResetError(10054, 'An existing connection was forcibly closed by the remote host', None, 10054, None))
+2026-11-04 11:55:11,588 WARNING tick AI NZDUSD: OpenRouter request failed: ('Connection aborted.', ConnectionResetError(10054, 'An existing connection was forcibly closed by the remote host', None, 10054, None))
+2026-11-04 11:55:14,554 WARNING tick AI EURUSD: OpenRouter request failed: ('Connection aborted.', ConnectionResetError(10054, 'An existing connection was forcibly closed by the remote host', None, 10054, None))
+2026-11-04 11:55:17,623 WARNING tick AI USDCAD: OpenRouter request failed: ('Connection aborted.', ConnectionResetError(10054, 'An existing connection was forcibly closed by the remote host', None, 10054, None))
+2026-11-04 11:55:24,953 WARNING tick AI GBPUSD: OpenRouter request failed: HTTPSConnectionPool(host='openrouter.ai', port=443): Max retries exceeded with url: /api/v1/chat/completions (Caused by NameResolutionError("HTTPSConnection(host='openrouter.ai', port=443): Failed to resolve 'openrouter.ai' ([Errno 11001] getaddrinfo failed)"))
+2026-11-04 11:55:57,114 WARNING tick AI EURUSD: OpenRouter request failed: HTTPSConnectionPool(host='openrouter.ai', port=443): Max retries exceeded with url: /api/v1/chat/completions (Caused by NewConnectionError("HTTPSConnection(host='openrouter.ai', port=443): Failed to establish a new connection: [WinError 10053] An established connection was aborted by the software in your host machine"))
+2026-11-04 11:55:57,115 WARNING tick AI USDCAD: OpenRouter request failed: HTTPSConnectionPool(host='openrouter.ai', port=443): Max retries exceeded with url: /api/v1/chat/completions (Caused by NewConnectionError("HTTPSConnection(host='openrouter.ai', port=443): Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network"))
+2026-11-04 11:55:57,115 WARNING tick AI GBPUSD: OpenRouter request failed: HTTPSConnectionPool(host='openrouter.ai', port=443): Max retries exceeded with url: /api/v1/chat/completions (Caused by NewConnectionError("HTTPSConnection(host='openrouter.ai', port=443): Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network"))
+2026-11-04 11:55:57,116 WARNING tick AI NZDUSD: OpenRouter request failed: HTTPSConnectionPool(host='openrouter.ai', port=443): Max retries exceeded with url: /api/v1/chat/completions (Caused by NewConnectionError("HTTPSConnection(host='openrouter.ai', port=443): Failed to establish a new connection: [WinError 10053] An established connection was aborted by the software in your host machine"))
+2026-11-04 11:59:44,498 INFO ENGINE |  | STARTED | live | XAUUSD | M15 | 12 strategies
+2026-11-04 12:00:06,762 INFO XAUUSD | ai_analyst | INFO | HOLD 70% - The trend is flat with high volatility; momentum indicators suggest overbought conditions. No clear trade signal at this moment.
+2026-11-04 12:04:05,139 INFO ENGINE |  | STOPPED | open positions keep their broker SL/TP
+2026-11-04 12:04:16,109 INFO ENGINE |  | STARTED | live | XAUUSD | M5 | 12 strategies
+2026-11-04 12:05:06,481 INFO XAUUSD | ai_analyst | INFO | HOLD 60% - The trend is flat with no clear momentum; waiting for a clearer signal is advisable.
+2026-11-04 12:05:06,481 INFO XAUUSD | narrow_range | SKIPPED | narrow_range BUY dropped: HTF trend is flat
+2026-11-04 12:10:06,134 INFO XAUUSD | ai_analyst | INFO | HOLD 60% - The market is in a flat trend with high RSI and Stochastic indicating overbought conditions, suggesting caution. No clear trade signal is present.
+2026-11-04 12:10:06,134 INFO XAUUSD | rsi2_momentum | SKIPPED | rsi2_momentum BUY dropped: HTF trend is flat
+2026-11-04 12:10:06,134 INFO XAUUSD | sr_breakout | SKIPPED | sr_breakout BUY dropped: HTF trend is flat
+2026-11-04 12:15:05,859 INFO XAUUSD | ai_analyst | INFO | HOLD 70% - The trend is flat with no clear momentum; price is near resistance and indicators show overbought conditions.
+2026-11-04 12:18:14,121 INFO ENGINE |  | STOPPED | open positions keep their broker SL/TP
+2026-11-04 12:18:29,242 INFO BTCUSD |  | SKIPPED | symbol not offered by this broker
+2026-11-04 12:18:30,623 INFO ENGINE |  | STARTED | live | XAUUSD, AUDUSD, EURUSD, GBPUSD, NZDUSD, USDCAD, USDJPY | M5 | 12 strategies
+2026-11-04 12:18:34,702 INFO AUDUSD | ai_analyst | INFO | HOLD 60% - The trend is flat with high RSI indicating overbought conditions; no clear entry signal.
+2026-11-04 12:18:34,702 INFO AUDUSD | heikin_ashi | SKIPPED | heikin_ashi BUY dropped: HTF trend is flat
+2026-11-04 12:18:34,702 INFO AUDUSD | rsi2_momentum | SKIPPED | rsi2_momentum BUY dropped: HTF trend is flat
+2026-11-04 12:20:05,694 INFO EURUSD | ai_analyst | INFO | BUY 75% - The higher-timeframe trend is up, and the last closed candle shows bullish momentum with a close above the EMA20 and EMA50. The ATR indicates low volatility, allowing for a tighter stop.
+2026-11-04 12:20:05,694 INFO EURUSD | ai_analyst | SKIPPED | BUY: target is only 0.53R, below the 1.0R minimum
+2026-11-04 12:20:05,694 INFO GBPUSD | ai_analyst | INFO | BUY 85% - The market is in an uptrend with a confirmed pullback to the EMA20, and the latest candle closed above the Bollinger mid-band, indicating bullish momentum.
+2026-11-04 12:20:06,083 INFO GBPUSD | trend_pullback | OPENED | BUY 0.01 @ 1.34871 | SL 1.34770 | TP 1.35019 | risk 1.00 | votes 3 | Uptrend pullback to EMA20, resumed
+2026-11-04 12:20:06,097 INFO USDJPY | ai_analyst | INFO | HOLD 70% - The trend is up, but the last candle shows overbought conditions with a potential reversal signal. Holding for now is prudent.
+2026-11-04 12:20:06,099 INFO USDJPY | bb_rsi_reversion | SKIPPED | SELL not confirmed by AI (HOLD 70%)
+2026-11-04 12:20:06,101 INFO USDJPY | candle_patterns | SKIPPED | candle_patterns SELL dropped: HTF trend is up
+2026-11-04 12:20:08,118 INFO XAUUSD | ai_analyst | INFO | HOLD 60% - The market is in a flat trend with high volatility and no clear direction, making it prudent to hold off on trading.
+2026-11-04 12:20:08,118 INFO XAUUSD | candle_patterns | SKIPPED | candle_patterns SELL dropped: HTF trend is flat
+2026-11-04 12:20:08,118 INFO AUDUSD | ai_analyst | INFO | HOLD 60% - The trend is flat with high RSI and ADX indicating potential overbought conditions; no clear entry signal.
+2026-11-04 12:20:08,119 INFO AUDUSD | smc | SKIPPED | smc SELL dropped: HTF trend is flat
+2026-11-04 12:20:08,119 INFO AUDUSD | candle_patterns | SKIPPED | candle_patterns SELL dropped: HTF trend is flat
+2026-11-04 12:20:08,119 INFO NZDUSD | ai_analyst | INFO | HOLD 60% - The market is flat with no clear trend, and the RSI indicates overbought conditions. No strong signals for entry.
+2026-11-04 12:20:08,119 INFO USDCAD | ai_analyst | INFO | SELL 75% - The trend is down, and the last candle closed below the Bollinger mid-band, confirming a bearish signal.
+2026-11-04 12:20:08,397 INFO USDCAD | bb_squeeze | OPENED | SELL 0.01 @ 1.39544 | SL 1.39585 | TP 1.39482 | risk 0.30 | votes 2 | Squeeze released: full candle below the mid-band
+2026-11-04 12:21:43,134 INFO GBPUSD | trend_pullback | CLOSED | #11231810525 closed on stop | P&L 0.09 (+0.09R)
+2026-11-04 12:21:43,134 INFO GBPUSD | trend_pullback | INFO | setup finished after 0 re-entries: closed on stop
+2026-11-04 12:21:43,404 INFO USDCAD | bb_squeeze | CLOSED | #11231811529 closed on stop | P&L 0.05 (+0.17R)
+2026-11-04 12:21:43,405 INFO USDCAD | bb_squeeze | INFO | setup finished after 0 re-entries: closed on stop
+2026-11-04 12:21:43,410 INFO ENGINE |  | STOPPED | flattened
+2026-11-04 12:22:10,609 INFO BTCUSD |  | SKIPPED | symbol not offered by this broker
+2026-11-04 12:22:11,177 INFO ENGINE |  | STARTED | live | XAUUSD, AUDUSD, EURUSD, GBPUSD, NZDUSD, USDCAD, USDJPY | M5 | 12 strategies
+2026-11-04 12:25:06,522 INFO AUDUSD | ai_analyst | INFO | HOLD 60% - The trend is flat with high RSI indicating overbought conditions; no clear entry signal.
+2026-11-04 12:25:06,522 INFO EURUSD | ai_analyst | INFO | BUY 75% - The higher-timeframe trend is up, and the last closed candle shows bullish momentum with confluence from the RSI signal.
+2026-11-04 12:25:06,795 INFO EURUSD | rsi2_momentum | OPENED | BUY 0.01 @ 1.12575 | SL 1.12474 | TP 1.12727 | risk 1.01 | votes 2 | RSI(2) pushed above 90 with price above SMA100
+2026-11-04 12:25:06,799 INFO GBPUSD | ai_analyst | INFO | HOLD 70% - The trend is up, but the last closed candle shows indecision near resistance. Wait for clearer momentum.
+2026-11-04 12:25:06,800 INFO NZDUSD | ai_analyst | INFO | HOLD 60% - The market is flat with no clear trend, and the RSI indicates overbought conditions. Holding is prudent until a clearer signal emerges.
+2026-11-04 12:25:06,801 INFO USDCAD | ai_analyst | INFO | SELL 75% - The higher-timeframe trend is down, and the last closed candle shows a bearish structure with momentum indicators confirming weakness. A sell trade aligns with the trend and key levels.
+2026-11-04 12:25:06,803 INFO USDCAD | ai_analyst | SKIPPED | SELL: target is only 0.10R, below the 1.0R minimum
+2026-11-04 12:25:06,803 INFO USDJPY | ai_analyst | INFO | HOLD 70% - The market is in an uptrend, but the last candle shows signs of potential reversal with overbought conditions. Holding is prudent until clearer signals emerge.
+2026-11-04 12:25:06,804 INFO USDJPY | bb_rsi_reversion | SKIPPED | SELL not confirmed by AI (HOLD 70%)
+2026-11-04 12:25:08,811 INFO ENGINE |  | HALTED | 10 trades opened today (limit) - no new entries until the next server day
+2026-11-04 12:25:08,817 INFO XAUUSD | ai_analyst | INFO | HOLD 60% - The market is in a flat trend with high volatility but lacks clear momentum or directional bias. Holding is prudent until a clearer signal emerges.
+2026-11-04 12:25:49,286 INFO EURUSD | rsi2_momentum | CLOSED | #11231899517 profit target 0.1 | P&L 0.10 (+0.10R)
+2026-11-04 12:25:49,291 INFO EURUSD | rsi2_momentum | INFO | setup finished after 0 re-entries: re-entry blocked: halted: 10 trades opened today (limit)
+2026-11-04 12:30:06,007 INFO XAUUSD | ai_analyst | INFO | HOLD 60% - The trend is flat with high volatility; momentum indicators suggest potential reversal, so it's prudent to wait for clearer signals.
+2026-11-04 12:30:06,008 INFO AUDUSD | ai_analyst | INFO | HOLD 60% - The market is flat with high RSI indicating overbought conditions; no clear trade signal.
+2026-11-04 12:30:06,008 INFO AUDUSD | rsi2_momentum | SKIPPED | rsi2_momentum BUY dropped: HTF trend is flat
+2026-11-04 12:30:06,008 INFO GBPUSD | ai_analyst | INFO | HOLD 70% - The trend is up, but the last closed candle shows indecision with no clear momentum. Waiting for a clearer signal.
+2026-11-04 12:30:08,010 INFO EURUSD | ai_analyst | INFO | BUY 75% - The trend is up with strong momentum indicated by the RSI and price is near the lower Bollinger Band, suggesting a potential bounce.
+2026-11-04 12:30:08,011 INFO EURUSD | ai_analyst | BLOCKED | BUY: halted: 10 trades opened today (limit)
+2026-11-04 12:30:08,012 INFO NZDUSD | ai_analyst | INFO | HOLD 60% - The trend is flat with no clear momentum; indicators show overbought conditions, suggesting caution.
+2026-11-04 12:30:08,012 INFO USDCAD | ai_analyst | INFO | SELL 75% - The trend is down, and the last candle closed below the narrowest bar, indicating a potential continuation of the bearish momentum.
+2026-11-04 12:30:08,013 INFO USDCAD | narrow_range | BLOCKED | SELL: halted: 10 trades opened today (limit)
+2026-11-04 12:30:08,013 INFO USDJPY | ai_analyst | INFO | BUY 75% - The higher-timeframe trend is up, and the last closed candle shows bullish momentum with RSI and Stochastic indicating strength. A buy trade aligns with the trend and key levels.
+2026-11-04 12:30:08,014 INFO USDJPY | ai_analyst | BLOCKED | BUY: halted: 10 trades opened today (limit)
+2026-11-04 12:35:06,948 INFO AUDUSD | ai_analyst | INFO | HOLD 60% - The market is flat with high RSI indicating overbought conditions; no clear trade signal is present.
+2026-11-04 12:35:06,948 INFO USDJPY | ai_analyst | INFO | HOLD 70% - The trend is up, but the last closed candle shows indecision near resistance. Holding for now is prudent.
+2026-11-04 12:35:08,962 INFO XAUUSD | ai_analyst | INFO | HOLD 60% - The market is in a flat trend with high volatility but lacks clear momentum or directional bias. Holding is prudent until a clearer signal emerges.
+2026-11-04 12:35:08,963 INFO EURUSD | ai_analyst | INFO | BUY 75% - The trend is up with strong momentum indicated by the RSI and Stochastic. The last closed candle shows a bullish close near the upper Bollinger Band, suggesting continuation.
+2026-11-04 12:35:08,964 INFO EURUSD | ai_analyst | BLOCKED | BUY: halted: 10 trades opened today (limit)
+2026-11-04 12:35:08,964 INFO GBPUSD | ai_analyst | INFO | BUY 75% - The higher-timeframe trend is up, and the last closed candle shows bullish momentum near the upper Bollinger Band, indicating potential continuation.
+2026-11-04 12:35:08,965 INFO GBPUSD | ai_analyst | BLOCKED | BUY: halted: 10 trades opened today (limit)
+2026-11-04 12:35:08,966 INFO USDCAD | ai_analyst | INFO | SELL 75% - The downtrend is confirmed by the HTF trend and the latest candle shows a bearish signal with RSI indicating oversold conditions.
+2026-11-04 12:35:08,967 INFO USDCAD | rsi2_momentum | BLOCKED | SELL: halted: 10 trades opened today (limit)
+2026-11-04 12:35:10,985 INFO NZDUSD | ai_analyst | INFO | HOLD 60% - The trend is flat with high RSI indicating overbought conditions; no clear entry signal.
+2026-11-04 12:40:05,979 INFO XAUUSD | ai_analyst | INFO | HOLD 60% - The market is in a flat trend with no clear momentum or directional bias, making it prudent to hold off on opening a trade.
+2026-11-04 12:40:05,980 INFO XAUUSD | heikin_ashi | SKIPPED | heikin_ashi SELL dropped: HTF trend is flat
+2026-11-04 12:40:05,980 INFO AUDUSD | ai_analyst | INFO | HOLD 60% - The market is flat with high RSI and ADX indicating potential overbought conditions; no clear trade signal.
+2026-11-04 12:40:05,981 INFO GBPUSD | ai_analyst | INFO | BUY 75% - The higher-timeframe trend is up, and the last closed candle shows bullish momentum with confluence from the RSI signal.
+2026-11-04 12:40:05,981 INFO GBPUSD | rsi2_momentum | BLOCKED | BUY: halted: 10 trades opened today (limit)
+2026-11-04 12:40:05,982 INFO NZDUSD | ai_analyst | INFO | HOLD 60% - The trend is flat with high RSI indicating overbought conditions; no clear entry signal.
+2026-11-04 12:40:05,982 INFO NZDUSD | rsi2_momentum | SKIPPED | rsi2_momentum BUY dropped: HTF trend is flat
+2026-11-04 12:40:07,983 INFO EURUSD | ai_analyst | INFO | BUY 85% - The trend is up, and the last closed candle shows bullish momentum with confluence from the RSI and other indicators.
+2026-11-04 12:40:07,984 INFO EURUSD | rsi2_momentum | BLOCKED | BUY: halted: 10 trades opened today (limit)
+2026-11-04 12:40:07,985 INFO USDCAD | ai_analyst | INFO | SELL 75% - The higher-timeframe trend is down, and the last closed candle shows bearish momentum with the RSI indicating oversold conditions. A sell trade aligns with the trend and has a favorable risk-reward ratio.
+2026-11-04 12:40:07,986 INFO USDCAD | ai_analyst | BLOCKED | SELL: halted: 10 trades opened today (limit)
+2026-11-04 12:40:07,986 INFO USDJPY | ai_analyst | INFO | BUY 75% - The higher-timeframe trend is up, and the last closed candle shows bullish momentum with price above key moving averages and near the upper Bollinger Band.
+2026-11-04 12:40:07,987 INFO USDJPY | ai_analyst | BLOCKED | BUY: halted: 10 trades opened today (limit)
+2026-11-04 12:45:06,534 INFO XAUUSD | ai_analyst | INFO | HOLD 60% - The market is in a flat trend with no clear momentum or directional bias, making it prudent to hold off on trading.
+2026-11-04 12:45:06,535 INFO AUDUSD | ai_analyst | INFO | HOLD 60% - The market is flat with high RSI and ADX indicating potential overbought conditions; no clear trade signal.
+2026-11-04 12:45:06,535 INFO EURUSD | ai_analyst | INFO | HOLD 70% - The higher-timeframe trend is up, but the last candle shows signs of overbought conditions with potential resistance at the upper Bollinger Band. Holding is prudent until clearer signals emerge.
+2026-11-04 12:45:06,536 INFO EURUSD | bb_rsi_reversion | SKIPPED | SELL not confirmed by AI (HOLD 70%)
+2026-11-04 12:45:08,545 INFO GBPUSD | ai_analyst | INFO | BUY 75% - The higher-timeframe trend is up, and the last closed candle shows bullish momentum with the price above key moving averages and near the upper Bollinger Band.
+2026-11-04 12:45:08,546 INFO GBPUSD | ai_analyst | BLOCKED | BUY: halted: 10 trades opened today (limit)
+2026-11-04 12:45:08,547 INFO NZDUSD | ai_analyst | INFO | SELL 75% - The market is showing overbought conditions with RSI above 70 and a bearish candle close, indicating potential reversal.
+2026-11-04 12:45:08,547 INFO NZDUSD | ai_analyst | SKIPPED | ai_analyst SELL dropped: HTF trend is flat
+2026-11-04 12:45:08,547 INFO USDCAD | ai_analyst | INFO | SELL 75% - The trend is down, and the last closed candle shows a bearish close near the lower Bollinger Band, indicating potential continuation.
+2026-11-04 12:45:08,549 INFO USDCAD | ai_analyst | BLOCKED | SELL: halted: 10 trades opened today (limit)
+2026-11-04 12:45:08,549 INFO USDJPY | ai_analyst | INFO | BUY 75% - The trend is up, and the last candle closed above the narrow range breakout level, indicating bullish momentum.
+2026-11-04 12:45:08,550 INFO USDJPY | narrow_range | BLOCKED | BUY: halted: 10 trades opened today (limit)
+2026-11-04 12:50:07,586 INFO XAUUSD | ai_analyst | INFO | HOLD 60% - The trend is flat with no clear momentum; price is near resistance and indicators show mixed signals.
+2026-11-04 12:50:07,587 INFO AUDUSD | ai_analyst | INFO | SELL 75% - The market is showing overbought conditions with RSI above 79 and a strong ADX indicating momentum. A potential reversal at the upper Bollinger Band suggests a sell opportunity.
+2026-11-04 12:50:07,587 INFO AUDUSD | ai_analyst | SKIPPED | ai_analyst SELL dropped: HTF trend is flat
+2026-11-04 12:50:07,588 INFO EURUSD | ai_analyst | INFO | BUY 75% - The higher-timeframe trend is up, and the last closed candle shows bullish momentum with the price above key moving averages. A buy trade is warranted with a favorable risk-reward ratio.
+2026-11-04 12:50:07,589 INFO EURUSD | ai_analyst | BLOCKED | BUY: halted: 10 trades opened today (limit)
+2026-11-04 12:50:07,589 INFO GBPUSD | ai_analyst | INFO | BUY 75% - The higher-timeframe trend is up, and the last closed candle shows bullish momentum with the RSI indicating strength. The price is near the upper Bollinger Band, suggesting potential continuation.
+2026-11-04 12:50:07,590 INFO GBPUSD | ai_analyst | BLOCKED | BUY: halted: 10 trades opened today (limit)
+2026-11-04 12:50:07,590 INFO USDCAD | ai_analyst | INFO | SELL 75% - The downtrend is confirmed by the HTF trend and indicators, with the last closed candle showing bearish momentum and RSI indicating oversold conditions.
+2026-11-04 12:50:07,591 INFO USDCAD | ai_analyst | BLOCKED | SELL: halted: 10 trades opened today (limit)
+2026-11-04 12:50:09,617 INFO NZDUSD | ai_analyst | INFO | HOLD 60% - The trend is flat with high RSI indicating overbought conditions; no clear entry signal.
+2026-11-04 12:50:09,618 INFO USDJPY | ai_analyst | INFO | BUY 75% - The trend is up with strong momentum indicated by RSI and price is above key moving averages. The setup aligns with rule signals suggesting a buy.
+2026-11-04 12:50:09,619 INFO USDJPY | rsi2_momentum | BLOCKED | BUY: halted: 10 trades opened today (limit)
+2026-11-04 12:55:06,499 INFO XAUUSD | ai_analyst | INFO | HOLD 60% - The market is in a flat trend with no clear momentum or direction, making it prudent to hold off on trading.
+2026-11-04 12:55:06,499 INFO AUDUSD | ai_analyst | INFO | SELL 75% - The market is showing signs of overbought conditions with RSI at 81.06 and a strong ADX indicating momentum. A sell trade is warranted as price approaches resistance near 0.7013.
+2026-11-04 12:55:06,500 INFO AUDUSD | rsi2_momentum | SKIPPED | rsi2_momentum BUY dropped: HTF trend is flat
+2026-11-04 12:55:06,500 INFO AUDUSD | ai_analyst | SKIPPED | ai_analyst SELL dropped: HTF trend is flat
+2026-11-04 12:55:06,501 INFO EURUSD | ai_analyst | INFO | BUY 85% - The higher-timeframe trend is up, and the last closed candle closed above the narrowest bar, indicating a bullish breakout. The indicators support upward momentum.
+2026-11-04 12:55:06,502 INFO EURUSD | narrow_range | BLOCKED | BUY: halted: 10 trades opened today (limit)
+2026-11-04 12:55:06,502 INFO GBPUSD | ai_analyst | INFO | BUY 75% - The higher-timeframe trend is up, and the last closed candle shows bullish momentum with the price above key moving averages and near the upper Bollinger Band.
+2026-11-04 12:55:06,503 INFO GBPUSD | ai_analyst | BLOCKED | BUY: halted: 10 trades opened today (limit)
+2026-11-04 12:55:06,503 INFO USDCAD | ai_analyst | INFO | SELL 75% - The higher-timeframe trend is down, and the last closed candle shows a bearish close with momentum indicators confirming weakness. A sell trade aligns with the trend and offers a favorable risk-reward ratio.
+2026-11-04 12:55:06,504 INFO USDCAD | ai_analyst | BLOCKED | SELL: halted: 10 trades opened today (limit)
+2026-11-04 12:55:08,509 INFO NZDUSD | ai_analyst | INFO | HOLD 60% - The market is flat with high RSI and ADX indicating potential overbought conditions; no clear trade signal.
+2026-11-04 12:55:08,510 INFO NZDUSD | rsi2_momentum | SKIPPED | rsi2_momentum BUY dropped: HTF trend is flat
+2026-11-04 12:55:08,510 INFO NZDUSD | narrow_range | SKIPPED | narrow_range BUY dropped: HTF trend is flat
+2026-11-04 12:55:08,511 INFO USDJPY | ai_analyst | INFO | SELL 75% - The market is showing signs of overbought conditions with RSI above 68 and a bearish candle close, suggesting a potential reversal. The stop is placed above the upper Bollinger Band for protection.
+2026-11-04 12:55:08,511 INFO USDJPY | ai_analyst | SKIPPED | ai_analyst SELL dropped: HTF trend is up
+2026-11-04 13:00:07,225 INFO XAUUSD | ai_analyst | INFO | HOLD 60% - The market is in a flat trend with no clear momentum or direction, making it prudent to hold off on entering a trade.
+2026-11-04 13:00:07,225 INFO XAUUSD | narrow_range | SKIPPED | narrow_range SELL dropped: HTF trend is flat
+2026-11-04 13:00:07,226 INFO USDCAD | ai_analyst | INFO | SELL 75% - The trend is down, and the last closed candle shows bearish momentum with RSI indicating oversold conditions. A sell trade aligns with the higher timeframe trend.
+2026-11-04 13:00:07,226 INFO USDCAD | ai_analyst | BLOCKED | SELL: halted: 10 trades opened today (limit)
+2026-11-04 13:00:07,227 INFO USDJPY | ai_analyst | INFO | SELL 75% - The market is overbought with RSI above 70 and price near the upper Bollinger Band, indicating potential reversal; a sell trade is warranted.
+2026-11-04 13:00:07,227 INFO USDJPY | ai_analyst | SKIPPED | ai_analyst SELL dropped: HTF trend is up
+2026-11-04 13:00:09,228 INFO AUDUSD | ai_analyst | INFO | SELL 75% - The market is overbought with RSI at 81.16 and a strong bearish candle close, indicating a potential reversal.
+2026-11-04 13:00:09,228 INFO AUDUSD | ai_analyst | SKIPPED | ai_analyst SELL dropped: HTF trend is flat
+2026-11-04 13:00:09,228 INFO EURUSD | ai_analyst | INFO | BUY 75% - The trend is up, and the last closed candle shows bullish momentum with price above key moving averages and near the upper Bollinger Band.
+2026-11-04 13:00:09,228 INFO EURUSD | ai_analyst | BLOCKED | BUY: halted: 10 trades opened today (limit)
+2026-11-04 13:00:09,229 INFO GBPUSD | ai_analyst | INFO | BUY 75% - The higher-timeframe trend is up, and the last closed candle shows bullish momentum with price above key moving averages.
+2026-11-04 13:00:09,229 INFO GBPUSD | ai_analyst | BLOCKED | BUY: halted: 10 trades opened today (limit)
+2026-11-04 13:00:09,229 INFO NZDUSD | ai_analyst | INFO | SELL 75% - The market is showing signs of overbought conditions with RSI above 70 and a bearish candle close, suggesting a potential reversal.
+2026-11-04 13:00:09,229 INFO NZDUSD | ai_analyst | SKIPPED | ai_analyst SELL dropped: HTF trend is flat
+2026-11-04 13:05:06,809 INFO XAUUSD | ai_analyst | INFO | HOLD 60% - The market is in a flat trend with no clear momentum or directional bias, making it prudent to hold off on trading.
+2026-11-04 13:05:06,809 INFO XAUUSD | heikin_ashi | SKIPPED | heikin_ashi SELL dropped: HTF trend is flat
+2026-11-04 13:05:06,809 INFO EURUSD | ai_analyst | INFO | BUY 85% - The higher-timeframe trend is up, and the last closed candle shows bullish momentum with the price above key moving averages and near the upper Bollinger Band.
+2026-11-04 13:05:06,811 INFO EURUSD | ai_analyst | BLOCKED | BUY: halted: 10 trades opened today (limit)
+2026-11-04 13:05:06,811 INFO GBPUSD | ai_analyst | INFO | BUY 75% - The higher-timeframe trend is up, and the last closed candle shows bullish momentum with price above key moving averages and near the upper Bollinger Band.
+2026-11-04 13:05:06,812 INFO GBPUSD | ai_analyst | BLOCKED | BUY: halted: 10 trades opened today (limit)
+2026-11-04 13:05:06,812 INFO NZDUSD | ai_analyst | INFO | HOLD 60% - The market is flat with high RSI and ADX indicating potential overbought conditions; no clear trade signal.
+2026-11-04 13:05:06,812 INFO USDJPY | ai_analyst | INFO | BUY 75% - The higher-timeframe trend is up, and the last closed candle shows bullish momentum with RSI and Stochastic indicating strength. A buy is warranted with a logical stop and target.
+2026-11-04 13:05:06,813 INFO USDJPY | ai_analyst | BLOCKED | BUY: halted: 10 trades opened today (limit)
+2026-11-04 13:05:08,830 INFO AUDUSD | ai_analyst | INFO | SELL 75% - The market is overbought with an RSI of 83.54 and a strong ADX indicating momentum. A sell at the next open aligns with the potential for a pullback.
+2026-11-04 13:05:08,830 INFO AUDUSD | smc | SKIPPED | smc BUY dropped: HTF trend is flat
+2026-11-04 13:05:08,830 INFO AUDUSD | narrow_range | SKIPPED | narrow_range BUY dropped: HTF trend is flat
+2026-11-04 13:05:08,830 INFO AUDUSD | ai_analyst | SKIPPED | ai_analyst SELL dropped: HTF trend is flat
+2026-11-04 13:05:08,831 INFO USDCAD | ai_analyst | INFO | SELL 75% - The trend is down, and multiple indicators signal a sell opportunity with price action confirming a bearish structure.
+2026-11-04 13:05:08,831 INFO USDCAD | rsi2_momentum | BLOCKED | SELL: halted: 10 trades opened today (limit)
+2026-11-04 13:08:00,902 INFO ENGINE |  | STOPPED | open positions keep their broker SL/TP
+2026-11-04 13:08:14,064 INFO BTCUSD |  | SKIPPED | symbol not offered by this broker
+2026-11-04 13:08:14,687 INFO ENGINE |  | STARTED | live | XAUUSD, AUDUSD, EURUSD, GBPUSD, NZDUSD, USDCAD, USDJPY | M5 | 12 strategies
+2026-11-04 13:10:05,974 INFO XAUUSD | ai_analyst | INFO | HOLD 60% - The market is in a flat trend with no clear momentum or directional bias, making it prudent to hold off on trading.
+2026-11-04 13:10:05,975 INFO XAUUSD | smc | SKIPPED | smc BUY dropped: HTF trend is flat
+2026-11-04 13:10:05,975 INFO EURUSD | ai_analyst | INFO | BUY 75% - The higher-timeframe trend is up, and the last closed candle shows bullish momentum with the price above key moving averages and near the upper Bollinger Band.
+2026-11-04 13:10:05,975 INFO EURUSD | ai_analyst | BLOCKED | BUY: halted: 10 trades opened today (limit)
+2026-11-04 13:10:05,975 INFO GBPUSD | ai_analyst | INFO | HOLD 70% - The market is in an uptrend with strong momentum, but the last closed candle shows indecision. Waiting for clearer signals is prudent.
+2026-11-04 13:10:05,975 INFO USDCAD | ai_analyst | INFO | SELL 75% - The trend is down, and the last closed candle shows a bearish structure with momentum indicators confirming weakness. A sell trade aligns with the overall trend and key levels.
+2026-11-04 13:10:05,976 INFO USDCAD | ai_analyst | BLOCKED | SELL: halted: 10 trades opened today (limit)
+2026-11-04 13:10:05,976 INFO USDJPY | ai_analyst | INFO | BUY 75% - The higher-timeframe trend is up, and the last closed candle shows bullish momentum with RSI above 60. A buy trade is warranted with a favorable risk-reward ratio.
+2026-11-04 13:10:05,976 INFO USDJPY | ai_analyst | BLOCKED | BUY: halted: 10 trades opened today (limit)
+2026-11-04 13:10:07,996 INFO AUDUSD | ai_analyst | INFO | SELL 75% - The market is overbought with an RSI above 80 and a flat trend, indicating a potential reversal. A sell at the next open offers a favorable risk-reward ratio.
+2026-11-04 13:10:07,997 INFO AUDUSD | ai_analyst | SKIPPED | ai_analyst SELL dropped: HTF trend is flat
+2026-11-04 13:10:07,997 INFO NZDUSD | ai_analyst | INFO | HOLD 60% - The trend is flat with high RSI and stochastic readings indicating overbought conditions; no clear entry signal.
+2026-11-04 13:15:06,508 INFO XAUUSD | ai_analyst | INFO | HOLD 60% - The market is in a flat trend with no clear momentum or direction, making it prudent to hold off on entering a trade.
+2026-11-04 13:15:06,509 INFO XAUUSD | heikin_ashi | SKIPPED | heikin_ashi BUY dropped: HTF trend is flat
+2026-11-04 13:15:06,509 INFO AUDUSD | ai_analyst | INFO | SELL 75% - The market is overbought with high RSI and stochastic values, indicating potential reversal; the trend is flat, suggesting a sell opportunity at resistance.
+2026-11-04 13:15:06,510 INFO AUDUSD | ai_analyst | SKIPPED | ai_analyst SELL dropped: HTF trend is flat
+2026-11-04 13:15:06,510 INFO EURUSD | ai_analyst | INFO | BUY 75% - The higher-timeframe trend is up, and the last closed candle shows bullish momentum with price above key moving averages.
+2026-11-04 13:15:06,511 INFO EURUSD | ai_analyst | BLOCKED | BUY: halted: 10 trades opened today (limit)
+2026-11-04 13:15:06,511 INFO GBPUSD | ai_analyst | INFO | BUY 75% - The higher-timeframe trend is up, and the last closed candle shows bullish momentum with the price above key moving averages.
+2026-11-04 13:15:06,512 INFO GBPUSD | ai_analyst | BLOCKED | BUY: halted: 10 trades opened today (limit)
+2026-11-04 13:15:06,513 INFO NZDUSD | ai_analyst | INFO | HOLD 60% - The trend is flat with high RSI indicating overbought conditions; no clear trade signal is present.
+2026-11-04 13:15:06,514 INFO USDCAD | ai_analyst | INFO | SELL 75% - The trend is down, and the last closed candle shows bearish momentum with the RSI indicating oversold conditions. A sell trade aligns with the overall trend and key levels.
+2026-11-04 13:15:06,515 INFO USDCAD | ai_analyst | BLOCKED | SELL: halted: 10 trades opened today (limit)
+2026-11-04 13:15:08,524 INFO USDJPY | ai_analyst | INFO | BUY 75% - The trend is up, and the last candle closed above the narrow range, indicating a potential breakout. The stop is placed just below the EMA20 for protection.
+2026-11-04 13:15:08,525 INFO USDJPY | narrow_range | BLOCKED | BUY: halted: 10 trades opened today (limit)
+2026-11-04 13:17:22,496 INFO ENGINE |  | STOPPED | open positions keep their broker SL/TP
+2026-11-04 13:19:32,649 INFO BTCUSD |  | SKIPPED | symbol not offered by this broker
+2026-11-04 13:19:33,245 INFO ENGINE |  | STARTED | live | XAUUSD, AUDUSD, EURUSD, GBPUSD, NZDUSD, USDCAD, USDJPY | M5 | 12 strategies
+2026-11-04 13:20:05,981 INFO USDJPY | ai_analyst | INFO | HOLD 70% - The trend is up, but the last closed candle shows indecision near a key level. Holding for potential continuation.
+2026-11-04 13:20:07,994 INFO XAUUSD | ai_analyst | INFO | HOLD 60% - The market is in a flat trend with no clear momentum or direction, making it prudent to hold off on entering a trade.
+2026-11-04 13:20:07,995 INFO XAUUSD | rsi2_momentum | SKIPPED | rsi2_momentum BUY dropped: HTF trend is flat
+2026-11-04 13:20:07,995 INFO XAUUSD | candle_patterns | SKIPPED | candle_patterns SELL dropped: HTF trend is flat
+2026-11-04 13:20:07,995 INFO AUDUSD | ai_analyst | INFO | SELL 75% - The market is overbought with RSI at 84.92 and a strong bearish candle close, indicating a potential reversal; the stop is placed above the recent swing high.
+2026-11-04 13:20:07,995 INFO AUDUSD | rsi2_momentum | SKIPPED | rsi2_momentum BUY dropped: HTF trend is flat
+2026-11-04 13:20:07,995 INFO AUDUSD | sr_breakout | SKIPPED | sr_breakout BUY dropped: HTF trend is flat
+2026-11-04 13:20:07,995 INFO AUDUSD | ai_analyst | SKIPPED | ai_analyst SELL dropped: HTF trend is flat
+2026-11-04 13:20:07,995 INFO EURUSD | ai_analyst | INFO | BUY 75% - The higher-timeframe trend is up, and the last closed candle shows bullish momentum with the price above key moving averages and near the upper Bollinger Band.
+2026-11-04 13:20:07,996 INFO EURUSD | ai_analyst | BLOCKED | BUY: halted: 10 trades opened today (limit)
+2026-11-04 13:20:07,996 INFO GBPUSD | ai_analyst | INFO | BUY 75% - The higher-timeframe trend is up, and the last closed candle shows bullish momentum with RSI and Stochastic indicating strength. A buy trade aligns with the trend and key levels.
+2026-11-04 13:20:07,996 INFO GBPUSD | ai_analyst | BLOCKED | BUY: halted: 10 trades opened today (limit)
+2026-11-04 13:20:07,996 INFO NZDUSD | ai_analyst | INFO | SELL 75% - The market is overbought with an RSI above 78 and a strong ADX indicating momentum. A sell at the next open aligns with the potential for a pullback.
+2026-11-04 13:20:07,996 INFO NZDUSD | rsi2_momentum | SKIPPED | rsi2_momentum BUY dropped: HTF trend is flat
+2026-11-04 13:20:07,996 INFO NZDUSD | sr_breakout | SKIPPED | sr_breakout BUY dropped: HTF trend is flat
+2026-11-04 13:20:07,996 INFO NZDUSD | ai_analyst | SKIPPED | ai_analyst SELL dropped: HTF trend is flat
+2026-11-04 13:20:07,996 INFO USDCAD | ai_analyst | INFO | SELL 75% - The higher-timeframe trend is down, and the last closed candle shows a bearish structure with momentum indicators confirming weakness. A sell trade aligns with the trend and key levels.
+2026-11-04 13:20:07,997 INFO USDCAD | ai_analyst | BLOCKED | SELL: halted: 10 trades opened today (limit)
+2026-11-04 13:27:04,558 INFO BTCUSD |  | SKIPPED | symbol not offered by this broker
+2026-11-04 13:27:05,193 INFO ENGINE |  | STARTED | live | XAUUSD, AUDUSD, EURUSD, GBPUSD, NZDUSD, USDCAD, USDJPY | M5 | 12 strategies
+2026-11-04 13:30:07,731 INFO XAUUSD | ai_analyst | INFO | HOLD 60% - The trend is flat with no clear momentum; price is near resistance and indicators show mixed signals.
+2026-11-04 13:30:07,732 INFO XAUUSD | smc | SKIPPED | smc SELL dropped: HTF trend is flat
+2026-11-04 13:30:07,732 INFO AUDUSD | ai_analyst | INFO | HOLD 60% - The trend is flat with high RSI indicating overbought conditions; no clear entry signal.
+2026-11-04 13:30:07,732 INFO AUDUSD | narrow_range | SKIPPED | narrow_range SELL dropped: HTF trend is flat
+2026-11-04 13:30:07,733 INFO EURUSD | ai_analyst | INFO | HOLD 70% - The trend is up, but the last closed candle shows indecision with a close near the open. Waiting for clearer momentum before entering.
+2026-11-04 13:30:07,733 INFO EURUSD | smc | SKIPPED | smc SELL dropped: HTF trend is up
+2026-11-04 13:30:07,733 INFO GBPUSD | ai_analyst | INFO | HOLD 70% - The trend is up, but the last closed candle shows indecision. Holding for potential continuation.
+2026-11-04 13:30:07,733 INFO GBPUSD | smc | SKIPPED | smc SELL dropped: HTF trend is up
+2026-11-04 13:30:07,733 INFO GBPUSD | heikin_ashi | SKIPPED | heikin_ashi SELL dropped: HTF trend is up
+2026-11-04 13:30:07,734 INFO USDJPY | ai_analyst | INFO | HOLD 70% - The trend is up, but the last closed candle shows indecision with a high RSI. Wait for clearer momentum before entering.
+2026-11-04 13:30:09,737 INFO NZDUSD | ai_analyst | INFO | HOLD 60% - The trend is flat with no clear momentum, and the indicators suggest overbought conditions. Waiting for clearer signals is advisable.
+2026-11-04 13:30:09,738 INFO NZDUSD | candle_patterns | SKIPPED | candle_patterns SELL dropped: HTF trend is flat
+2026-11-04 13:30:09,739 INFO USDCAD | ai_analyst | INFO | SELL 75% - The higher-timeframe trend is down, and the last closed candle shows a bearish structure with potential for further downside. Key levels and ATR suggest a reasonable risk-reward setup.
+2026-11-04 13:30:10,025 INFO USDCAD | ai_analyst | OPENED | SELL 0.01 @ 1.39559 | SL 1.39651 | TP 1.39450 | risk 0.64 | votes 1 | AI 75%: The higher-timeframe trend is down, and the last closed candle shows a bearish structure with potential for further down
+2026-11-04 13:35:06,532 INFO EURUSD | ai_analyst | INFO | HOLD 60% - The trend is up, but momentum indicators show weakness and the last candle closed near the low. No clear entry signal.
+2026-11-04 13:35:06,532 INFO EURUSD | bb_squeeze | SKIPPED | bb_squeeze SELL dropped: HTF trend is up
+2026-11-04 13:35:06,532 INFO EURUSD | heikin_ashi | SKIPPED | heikin_ashi SELL dropped: HTF trend is up
+2026-11-04 13:35:06,532 INFO NZDUSD | ai_analyst | INFO | HOLD 60% - The trend is flat with no clear momentum or directional bias, making it prudent to hold off on trading.
+2026-11-04 13:35:08,551 INFO AUDUSD | ai_analyst | INFO | HOLD 60% - The trend is flat with no clear momentum or directional bias, and the indicators suggest overbought conditions.
+2026-11-04 13:35:08,551 INFO GBPUSD | ai_analyst | INFO | HOLD 60% - The market is in an uptrend, but the last closed candle shows indecision with a lack of momentum. Waiting for clearer signals.
+2026-11-04 13:35:08,551 INFO USDCAD | ai_analyst | INFO | SELL 75% - The last candle is a shooting star at a 10-bar high, confirming the downtrend; momentum indicators suggest potential for further downside.
+2026-11-04 13:35:08,551 INFO USDCAD | candle_patterns | BLOCKED | SELL: already in a position on this symbol
+2026-11-04 13:35:08,552 INFO USDJPY | ai_analyst | INFO | BUY 85% - The trend is up with strong momentum indicators and multiple rule signals supporting a buy; price is near the upper Bollinger Band.
+2026-11-04 13:35:08,829 INFO USDJPY | heikin_ashi | OPENED | BUY 0.01 @ 158.473 | SL 158.313 | TP 158.711 | risk 1.01 | votes 4 | Two green Heikin-Ashi after red, %K above %D
+2026-11-04 13:35:10,841 INFO XAUUSD | ai_analyst | INFO | HOLD 60% - The market is in a flat trend with no clear momentum or directional bias, making it prudent to hold off on entering a trade.
+2026-11-04 13:35:10,841 INFO XAUUSD | heikin_ashi | SKIPPED | heikin_ashi SELL dropped: HTF trend is flat
+2026-11-04 13:37:05,703 INFO USDCAD | ai_analyst | CLOSED | #11233000567 closed manually in MT5 (desktop) | P&L 0.05 (+0.08R)
+2026-11-04 13:37:05,704 INFO USDCAD | ai_analyst | INFO | setup finished after 0 re-entries: closed manually in MT5 (desktop)
+2026-11-04 13:40:05,321 INFO XAUUSD | ai_analyst | INFO | HOLD 60% - The trend is flat with no clear momentum; price is near resistance and indicators show mixed signals.
+2026-11-04 13:40:05,321 INFO AUDUSD | ai_analyst | INFO | HOLD 60% - The trend is flat with no clear momentum; indicators show mixed signals and price is near key resistance.
+2026-11-04 13:40:05,321 INFO AUDUSD | heikin_ashi | SKIPPED | heikin_ashi SELL dropped: HTF trend is flat
+2026-11-04 13:40:05,321 INFO USDCAD | ai_analyst | INFO | SELL 75% - The higher-timeframe trend is down, and the last closed candle shows a bearish structure with momentum indicators suggesting a potential continuation.
+2026-11-04 13:40:05,941 INFO USDCAD | ai_analyst | OPENED | SELL 0.01 @ 1.39556 | SL 1.39650 | TP 1.39450 | risk 0.67 | votes 1 | AI 75%: The higher-timeframe trend is down, and the last closed candle shows a bearish structure with momentum indicators sugges
+2026-11-04 13:40:05,946 INFO USDJPY | ai_analyst | INFO | HOLD 70% - The higher-timeframe trend is up, but the last candle shows signs of potential reversal with overbought RSI and a rule signal suggesting a sell. Caution is warranted.
+2026-11-04 13:40:05,947 INFO USDJPY | bb_rsi_reversion | SKIPPED | SELL not confirmed by AI (HOLD 70%)
+2026-11-04 13:40:07,954 INFO EURUSD | ai_analyst | INFO | HOLD 60% - The trend is up, but momentum indicators show weakness and the last candle closed near the lower Bollinger Band, indicating potential indecision.
+2026-11-04 13:40:07,954 INFO GBPUSD | ai_analyst | INFO | HOLD 70% - The trend is up, but momentum indicators show weakness with RSI below 50 and Stochastic oversold. Waiting for clearer bullish signals.
+2026-11-04 13:40:07,954 INFO GBPUSD | bb_squeeze | SKIPPED | bb_squeeze SELL dropped: HTF trend is up
+2026-11-04 13:40:07,954 INFO NZDUSD | ai_analyst | INFO | HOLD 60% - The trend is flat with no clear momentum or direction, and the last closed candle shows indecision. Waiting for clearer signals is advisable.
+2026-11-04 13:40:07,954 INFO NZDUSD | heikin_ashi | SKIPPED | heikin_ashi SELL dropped: HTF trend is flat
+2026-11-04 13:40:30,094 INFO USDCAD | ai_analyst | CLOSED | #11233195694 closed manually in MT5 (desktop) | P&L 0.04 (+0.06R)
+2026-11-04 13:40:30,094 INFO USDCAD | ai_analyst | INFO | setup finished after 0 re-entries: closed manually in MT5 (desktop)
+2026-11-04 13:45:06,224 INFO XAUUSD | ai_analyst | INFO | HOLD 60% - The market is in a flat trend with no clear momentum or directional bias, making it prudent to hold off on entering a trade.
+2026-11-04 13:45:06,224 INFO AUDUSD | ai_analyst | INFO | HOLD 60% - The trend is flat with no clear momentum; price is near key resistance and support levels, suggesting indecision.
+2026-11-04 13:45:06,224 INFO EURUSD | ai_analyst | INFO | HOLD 60% - The trend is up, but momentum indicators show weakness and the last candle closed near the low. No clear entry signal.
+2026-11-04 13:45:06,224 INFO NZDUSD | ai_analyst | INFO | HOLD 60% - The trend is flat with no clear momentum, and price is near key levels without a strong signal to enter.
+2026-11-04 13:45:06,224 INFO USDJPY | ai_analyst | INFO | HOLD 70% - The trend is up, but the last closed candle shows signs of indecision near resistance. Waiting for clearer momentum.
+2026-11-04 13:45:08,243 INFO GBPUSD | ai_analyst | INFO | HOLD 60% - The market is in an uptrend, but momentum indicators show weakness. No clear entry signal is present.
+2026-11-04 13:45:08,243 INFO USDCAD | ai_analyst | INFO | SELL 75% - The higher-timeframe trend is down, and the last closed candle shows a bearish close below key levels, indicating potential continuation.
+2026-11-04 13:45:08,602 INFO USDCAD | ai_analyst | OPENED | SELL 0.01 @ 1.39589 | SL 1.39651 | TP 1.39450 | risk 0.44 | votes 1 | AI 75%: The higher-timeframe trend is down, and the last closed candle shows a bearish close below key levels, indicating potent
+2026-11-04 13:45:39,171 INFO USDCAD | ai_analyst | CLOSED | #11233294085 profit target 0.1 | P&L 0.10 (+0.23R)
+2026-11-04 13:45:39,440 INFO USDCAD | ai_analyst | OPENED | SELL 0.01 @ 1.39577 | SL 1.39651 | TP 1.39450 | risk 0.54 | re-entry 1 inside the setup range
+2026-11-04 13:45:39,441 ERROR cycle failed
+Traceback (most recent call last):
+  File "D:\Projects\Personal\TRADING\forex_bot_v2\app.py", line 1711, in _run
+    self._cycle()
+    ~~~~~~~~~~~^^
+  File "D:\Projects\Personal\TRADING\forex_bot_v2\app.py", line 1814, in _cycle
+    self._run_setups()
+    ~~~~~~~~~~~~~~~~^^
+  File "D:\Projects\Personal\TRADING\forex_bot_v2\app.py", line 2190, in _run_setups
+    self._save_state()
+    ~~~~~~~~~~~~~~~~^^
+  File "D:\Projects\Personal\TRADING\forex_bot_v2\app.py", line 1779, in _save_state
+    save_json(self.state_file, {
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+        'positions': [asdict(p) for p in self.positions.values()],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        'paper_seq': self.paper_seq, 'setups': self.setups,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    })
+    ^^
+  File "D:\Projects\Personal\TRADING\forex_bot_v2\app.py", line 213, in save_json
+    os.replace(tmp, path)
+    ~~~~~~~~~~^^^^^^^^^^^
+PermissionError: [WinError 5] Access is denied: 'D:\\Projects\\Personal\\TRADING\\forex_bot_v2\\bot_data\\state_live.json.tmp' -> 'D:\\Projects\\Personal\\TRADING\\forex_bot_v2\\bot_data\\state_live.json'
+2026-11-04 13:50:05,775 INFO AUDUSD | ai_analyst | INFO | HOLD 60% - The trend is flat with no clear momentum; price is near key levels, suggesting caution.
+2026-11-04 13:50:07,784 INFO XAUUSD | ai_analyst | INFO | HOLD 60% - The trend is flat with no clear momentum; price is near key levels and volatility is low.
+2026-11-04 13:50:07,784 INFO XAUUSD | smc | SKIPPED | smc BUY dropped: HTF trend is flat
+2026-11-04 13:50:07,785 INFO EURUSD | ai_analyst | INFO | HOLD 60% - The market is in an uptrend, but the last closed candle shows indecision with a bearish close. Momentum indicators are mixed, and there is no clear signal to enter a trade.
+2026-11-04 13:50:07,785 INFO GBPUSD | ai_analyst | INFO | HOLD 60% - The market is in an uptrend, but the last closed candle shows weak momentum with an RSI below 50 and stochastics indicating oversold conditions. No clear entry signal is present.
+2026-11-04 13:50:07,785 INFO NZDUSD | ai_analyst | INFO | HOLD 60% - The market is in a flat trend with no clear momentum or directional bias, making it prudent to hold off on trading.
+2026-11-04 13:50:07,785 INFO USDCAD | ai_analyst | INFO | SELL 75% - The higher-timeframe trend is down, and the last closed candle shows a bearish structure with momentum indicators suggesting potential continuation.
+2026-11-04 13:50:07,785 INFO USDCAD | ai_analyst | BLOCKED | SELL: already in a position on this symbol
+2026-11-04 13:50:09,808 INFO USDJPY | ai_analyst | INFO | BUY 75% - The trend is up with strong momentum indicated by the RSI and ADX. The last closed candle shows a bullish close near the upper Bollinger Band, suggesting continuation.
+2026-11-04 13:50:09,808 INFO USDJPY | ai_analyst | BLOCKED | BUY: already in a position on this symbol
+2026-11-04 13:54:01,455 INFO USDJPY | heikin_ashi | CLOSED | #11233105459 profit target 0.1 | P&L 0.11 (+0.11R)
+2026-11-04 13:54:01,457 INFO USDJPY | heikin_ashi | BLOCKED | BUY: minimum lot would risk 1.13 (3.26% of equity), above the 3.1% cap
+2026-11-04 13:54:01,459 ERROR cycle failed
+Traceback (most recent call last):
+  File "D:\Projects\Personal\TRADING\forex_bot_v2\app.py", line 1711, in _run
+    self._cycle()
+    ~~~~~~~~~~~^^
+  File "D:\Projects\Personal\TRADING\forex_bot_v2\app.py", line 1814, in _cycle
+    self._run_setups()
+    ~~~~~~~~~~~~~~~~^^
+  File "D:\Projects\Personal\TRADING\forex_bot_v2\app.py", line 2190, in _run_setups
+    self._save_state()
+    ~~~~~~~~~~~~~~~~^^
+  File "D:\Projects\Personal\TRADING\forex_bot_v2\app.py", line 1779, in _save_state
+    save_json(self.state_file, {
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+        'positions': [asdict(p) for p in self.positions.values()],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        'paper_seq': self.paper_seq, 'setups': self.setups,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    })
+    ^^
+  File "D:\Projects\Personal\TRADING\forex_bot_v2\app.py", line 213, in save_json
+    os.replace(tmp, path)
+    ~~~~~~~~~~^^^^^^^^^^^
+PermissionError: [WinError 5] Access is denied: 'D:\\Projects\\Personal\\TRADING\\forex_bot_v2\\bot_data\\state_live.json.tmp' -> 'D:\\Projects\\Personal\\TRADING\\forex_bot_v2\\bot_data\\state_live.json'
+2026-11-04 13:54:31,647 INFO USDJPY | heikin_ashi | BLOCKED | BUY: minimum lot would risk 1.14 (3.29% of equity), above the 3.1% cap
+2026-11-04 13:55:01,851 INFO USDJPY | heikin_ashi | BLOCKED | BUY: minimum lot would risk 1.13 (3.26% of equity), above the 3.1% cap
+2026-11-04 13:55:01,851 INFO USDJPY | heikin_ashi | INFO | setup finished after 0 re-entries: re-entry failed 3 times
+2026-11-04 13:55:06,692 INFO XAUUSD | ai_analyst | INFO | HOLD 60% - The market is in a flat trend with no clear momentum or direction, making it prudent to hold off on trading.
+2026-11-04 13:55:06,693 INFO XAUUSD | trend_pullback | SKIPPED | trend_pullback BUY dropped: HTF trend is flat
+2026-11-04 13:55:06,693 INFO XAUUSD | narrow_range | SKIPPED | narrow_range BUY dropped: HTF trend is flat
+2026-11-04 13:55:06,693 INFO AUDUSD | ai_analyst | INFO | HOLD 60% - The trend is flat with no clear momentum; waiting for a clearer signal is advisable.
+2026-11-04 13:55:06,693 INFO AUDUSD | narrow_range | SKIPPED | narrow_range SELL dropped: HTF trend is flat
+2026-11-04 13:55:06,693 INFO EURUSD | ai_analyst | INFO | HOLD 60% - The trend is up, but momentum indicators show weakness and the last closed candle is indecisive. No clear entry signal.
+2026-11-04 13:55:06,693 INFO NZDUSD | ai_analyst | INFO | HOLD 60% - The trend is flat with no clear momentum or direction, and the indicators suggest indecision. It's best to wait for a clearer signal.
+2026-11-04 13:55:06,694 INFO NZDUSD | candle_patterns | SKIPPED | candle_patterns BUY dropped: HTF trend is flat
+2026-11-04 13:55:06,694 INFO USDCAD | ai_analyst | INFO | SELL 75% - The higher-timeframe trend is down, and the last closed candle shows a bearish close near resistance. A sell trade aligns with the trend and key levels.
+2026-11-04 13:55:06,694 INFO USDCAD | ai_analyst | BLOCKED | SELL: already in a position on this symbol
+2026-11-04 13:55:06,694 INFO USDJPY | ai_analyst | INFO | BUY 75% - The trend is up, and the last closed candle indicates a breakout above a narrow range, supported by strong momentum indicators.
+2026-11-04 13:55:06,989 INFO USDJPY | narrow_range | OPENED | BUY 0.01 @ 158.484 | SL 158.443 | TP 158.545 | risk 0.26 | votes 2 | Closed above the narrowest bar of 7
+2026-11-04 13:55:08,997 INFO GBPUSD | ai_analyst | INFO | HOLD 60% - The trend is up, but momentum indicators show weakness with low RSI and Stochastic. No clear entry signal.
+2026-11-04 13:58:04,475 INFO USDJPY | narrow_range | CLOSED | #11233447335 profit target 0.1 | P&L 0.21 (+0.82R)
+2026-11-04 13:58:04,737 INFO USDJPY | narrow_range | OPENED | BUY 0.01 @ 158.521 | SL 158.443 | TP 158.545 | risk 0.47 | re-entry 1 inside the setup range
+2026-11-04 13:59:11,496 INFO USDJPY | narrow_range | CLOSED | #11233498050 profit target 0.1 | P&L 0.13 (+0.28R)
+2026-11-04 13:59:11,759 INFO USDJPY | narrow_range | OPENED | BUY 0.01 @ 158.544 | SL 158.443 | TP 158.545 | risk 0.64 | re-entry 2 inside the setup range
+2026-11-04 13:59:39,914 INFO USDJPY | narrow_range | CLOSED | #11233517419 TP | P&L 0.01 (+0.02R)
+2026-11-04 13:59:39,914 INFO USDJPY | narrow_range | INFO | setup finished after 2 re-entries: TP hit
+2026-11-04 13:59:39,915 INFO USDJPY |  | INFO | TP hit - analysing the chart again for the next trade
+2026-11-04 13:59:44,002 INFO USDJPY | ai_analyst | INFO | BUY 75% - The higher-timeframe trend is up, and the last closed candle indicates a breakout above a narrow range, supported by strong momentum indicators.
+2026-11-04 13:59:44,270 INFO USDJPY | narrow_range | OPENED | BUY 0.01 @ 158.549 | SL 158.443 | TP 158.705 | risk 0.66 | votes 2 | Closed above the narrowest bar of 7
+2026-11-04 14:00:04,954 INFO XAUUSD | ai_analyst | INFO | HOLD 70% - The trend is flat with mixed momentum indicators; holding is prudent until a clearer signal emerges.
+2026-11-04 14:00:04,954 INFO XAUUSD | trend_pullback | SKIPPED | trend_pullback BUY dropped: HTF trend is flat
+2026-11-04 14:00:04,954 INFO XAUUSD | heikin_ashi | SKIPPED | heikin_ashi BUY dropped: HTF trend is flat
+2026-11-04 14:00:04,954 INFO XAUUSD | rsi2_momentum | SKIPPED | rsi2_momentum BUY dropped: HTF trend is flat
+2026-11-04 14:00:04,954 INFO XAUUSD | narrow_range | SKIPPED | narrow_range BUY dropped: HTF trend is flat
+2026-11-04 14:00:04,955 INFO EURUSD | ai_analyst | INFO | HOLD 60% - The trend is up, but momentum indicators show weakness and price is near key resistance. Wait for clearer signals.
+2026-11-04 14:00:04,955 INFO GBPUSD | ai_analyst | INFO | HOLD 70% - The trend is up, but momentum indicators show weakness with RSI below 50 and Stochastic oversold. Waiting for clearer bullish signals.
+2026-11-04 14:00:04,955 INFO NZDUSD | ai_analyst | INFO | HOLD 60% - The trend is flat with no clear momentum or direction, and the indicators suggest indecision. Holding is prudent until a clearer signal emerges.
+2026-11-04 14:00:06,963 INFO USDCAD | ai_analyst | INFO | SELL 75% - The higher-timeframe trend is down, and the last closed candle shows a bearish close near resistance levels with momentum indicators suggesting potential weakness.
+2026-11-04 14:00:06,965 INFO USDCAD | ai_analyst | BLOCKED | SELL: already in a position on this symbol
+2026-11-04 14:00:06,966 INFO USDJPY | ai_analyst | INFO | BUY 85% - The trend is up with strong momentum indicated by RSI and price action above key moving averages. A buy is warranted with a favorable risk-reward ratio.
+2026-11-04 14:00:06,967 INFO USDJPY | rsi2_momentum | BLOCKED | BUY: already in a position on this symbol
+2026-11-04 14:00:08,982 INFO AUDUSD | ai_analyst | INFO | HOLD 60% - The market is flat with no clear trend, and the last closed candle shows indecision. Holding is prudent until a clearer signal emerges.
+2026-11-04 14:00:08,982 INFO AUDUSD | candle_patterns | SKIPPED | candle_patterns BUY dropped: HTF trend is flat
+2026-11-04 14:05:05,644 INFO AUDUSD | ai_analyst | INFO | HOLD 60% - The trend is flat with no clear momentum or direction, and the indicators show mixed signals. It's best to wait for a clearer setup.
+2026-11-04 14:05:05,644 INFO EURUSD | ai_analyst | INFO | HOLD 60% - The trend is up, but momentum indicators show weakness with low RSI and Stochastic. No clear entry signal.
+2026-11-04 14:05:05,644 INFO EURUSD | sr_breakout | SKIPPED | sr_breakout SELL dropped: HTF trend is up
+2026-11-04 14:05:05,644 INFO GBPUSD | ai_analyst | INFO | HOLD 70% - The trend is up, but momentum indicators show weakness with low RSI and Stochastic. Price is near resistance, suggesting caution.
+2026-11-04 14:05:05,645 INFO NZDUSD | ai_analyst | INFO | HOLD 60% - The trend is flat with no clear momentum; price is near key levels with mixed signals.
+2026-11-04 14:05:05,645 INFO USDCAD | ai_analyst | INFO | SELL 75% - The higher-timeframe trend is down, and the last closed candle shows a bearish close near resistance levels. A sell trade aligns with the trend and offers a favorable risk-reward ratio.
+2026-11-04 14:05:05,645 INFO USDCAD | ai_analyst | BLOCKED | SELL: already in a position on this symbol
+2026-11-04 14:05:07,663 INFO XAUUSD | ai_analyst | INFO | HOLD 60% - The trend is flat with no clear momentum; price is near key resistance and indicators show mixed signals.
+2026-11-04 14:05:07,664 INFO USDJPY | ai_analyst | INFO | SELL 75% - The last closed candle shows a bearish reversal at a key resistance level with high RSI and Stochastic readings indicating overbought conditions.
+2026-11-04 14:05:07,665 INFO USDJPY | ai_analyst | SKIPPED | ai_analyst SELL dropped: HTF trend is up
+2026-11-04 14:05:48,187 INFO USDJPY | narrow_range | CLOSED | #11233532155 profit target 0.1 | P&L 0.11 (+0.17R)
+2026-11-04 14:05:48,471 INFO USDJPY | narrow_range | OPENED | BUY 0.01 @ 158.570 | SL 158.443 | TP 158.705 | risk 0.80 | re-entry 1 inside the setup range
+2026-11-04 14:40:07,537 INFO USDCAD | ai_analyst | CLOSED | #11233303229 SL | P&L -0.53 (-0.97R)
+2026-11-04 14:40:07,537 INFO USDCAD | ai_analyst | INFO | setup finished after 1 re-entry: SL
+2026-11-04 14:40:12,632 INFO XAUUSD | ai_analyst | INFO | HOLD 60% - The trend is flat with no clear momentum; price is near key levels and volatility is low.
+2026-11-04 14:40:12,653 INFO AUDUSD | ai_analyst | INFO | HOLD 60% - The trend is flat with no clear momentum or directional bias, and the last closed candle shows indecision.
+2026-11-04 14:40:12,654 INFO AUDUSD | narrow_range | SKIPPED | narrow_range SELL dropped: HTF trend is flat
+2026-11-04 14:40:12,654 INFO EURUSD | ai_analyst | INFO | HOLD 70% - The trend is up, but momentum is weak with RSI below 50. Price is near key resistance at 1.12629, suggesting caution.
+2026-11-04 14:40:12,722 INFO EURUSD | smc | SKIPPED | smc SELL dropped: HTF trend is up
+2026-11-04 14:40:12,722 INFO EURUSD | candle_patterns | SKIPPED | candle_patterns SELL dropped: HTF trend is up
+2026-11-04 14:40:12,722 INFO EURUSD | narrow_range | SKIPPED | narrow_range SELL dropped: HTF trend is up
+2026-11-04 14:40:12,722 INFO GBPUSD | ai_analyst | INFO | HOLD 60% - The trend is up, but momentum indicators show indecision. Price is near the upper Bollinger Band, suggesting potential resistance.
+2026-11-04 14:40:12,722 INFO NZDUSD | ai_analyst | INFO | HOLD 60% - The market is flat with no clear trend, and indicators suggest low momentum. Holding is prudent until a clearer signal emerges.
+2026-11-04 14:40:12,723 INFO NZDUSD | heikin_ashi | SKIPPED | heikin_ashi BUY dropped: HTF trend is flat
+2026-11-04 14:40:14,843 INFO USDJPY | ai_analyst | INFO | BUY 75% - The trend is up with strong momentum, and the last closed candle shows a bullish structure near support. A buy is warranted.
+2026-11-04 14:40:14,844 INFO USDJPY | ai_analyst | BLOCKED | BUY: already in a position on this symbol
+2026-11-04 14:40:18,869 INFO USDCAD | ai_analyst | INFO | SELL 75% - The higher-timeframe trend is down, and the last closed candle shows a bearish structure with momentum. Key levels and indicators support a potential downward move.
+2026-11-04 14:40:18,869 INFO USDCAD | ai_analyst | BLOCKED | SELL: cooling down after a loss on this symbol
+2026-11-04 18:24:33,080 WARNING tick AI NZDUSD: OpenRouter request failed: ("Connection broken: ConnectionResetError(10054, 'An existing connection was forcibly closed by the remote host', None, 10054, None)", ConnectionResetError(10054, 'An existing connection was forcibly closed by the remote host', None, 10054, None))
+2026-11-04 18:48:26,613 WARNING tick AI EURUSD: OpenRouter request failed: HTTPSConnectionPool(host='openrouter.ai', port=443): Max retries exceeded with url: /api/v1/chat/completions (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1032)')))
+2026-11-04 18:48:28,021 WARNING tick AI XAUUSD: OpenRouter request failed: HTTPSConnectionPool(host='openrouter.ai', port=443): Max retries exceeded with url: /api/v1/chat/completions (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1032)')))
+2026-11-04 18:48:29,928 WARNING tick AI USDCAD: OpenRouter request failed: HTTPSConnectionPool(host='openrouter.ai', port=443): Max retries exceeded with url: /api/v1/chat/completions (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1032)')))
+2026-11-04 18:48:32,061 WARNING tick AI GBPUSD: OpenRouter request failed: HTTPSConnectionPool(host='openrouter.ai', port=443): Max retries exceeded with url: /api/v1/chat/completions (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1032)')))
+2026-11-04 18:48:48,948 WARNING tick AI EURUSD: OpenRouter request failed: HTTPSConnectionPool(host='openrouter.ai', port=443): Max retries exceeded with url: /api/v1/chat/completions (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1032)')))
+2026-11-04 18:48:49,798 WARNING tick AI XAUUSD: OpenRouter request failed: HTTPSConnectionPool(host='openrouter.ai', port=443): Max retries exceeded with url: /api/v1/chat/completions (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1032)')))
+2026-11-04 18:48:50,842 WARNING tick AI USDCAD: OpenRouter request failed: HTTPSConnectionPool(host='openrouter.ai', port=443): Max retries exceeded with url: /api/v1/chat/completions (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1032)')))
+2026-11-04 18:48:53,257 WARNING tick AI GBPUSD: OpenRouter request failed: HTTPSConnectionPool(host='openrouter.ai', port=443): Max retries exceeded with url: /api/v1/chat/completions (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1032)')))
+2026-11-04 18:49:09,675 WARNING tick AI EURUSD: OpenRouter request failed: HTTPSConnectionPool(host='openrouter.ai', port=443): Max retries exceeded with url: /api/v1/chat/completions (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1032)')))
+2026-11-04 18:49:11,088 WARNING tick AI XAUUSD: OpenRouter request failed: HTTPSConnectionPool(host='openrouter.ai', port=443): Max retries exceeded with url: /api/v1/chat/completions (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1032)')))
+2026-11-04 18:49:12,594 WARNING tick AI USDCAD: OpenRouter request failed: HTTPSConnectionPool(host='openrouter.ai', port=443): Max retries exceeded with url: /api/v1/chat/completions (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1032)')))
+2026-11-04 18:49:14,253 WARNING tick AI GBPUSD: OpenRouter request failed: HTTPSConnectionPool(host='openrouter.ai', port=443): Max retries exceeded with url: /api/v1/chat/completions (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1032)')))
+2026-11-04 18:49:31,148 WARNING tick AI EURUSD: OpenRouter request failed: HTTPSConnectionPool(host='openrouter.ai', port=443): Max retries exceeded with url: /api/v1/chat/completions (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1032)')))
+2026-11-04 18:49:32,049 WARNING tick AI XAUUSD: OpenRouter request failed: HTTPSConnectionPool(host='openrouter.ai', port=443): Max retries exceeded with url: /api/v1/chat/completions (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1032)')))
+2026-11-04 18:49:33,531 WARNING tick AI USDCAD: OpenRouter request failed: HTTPSConnectionPool(host='openrouter.ai', port=443): Max retries exceeded with url: /api/v1/chat/completions (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1032)')))
+2026-11-04 18:49:34,978 WARNING tick AI GBPUSD: OpenRouter request failed: HTTPSConnectionPool(host='openrouter.ai', port=443): Max retries exceeded with url: /api/v1/chat/completions (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1032)')))
+2026-11-04 18:51:08,452 WARNING tick AI USDCAD: OpenRouter request failed: ('Connection aborted.', ConnectionResetError(10054, 'An existing connection was forcibly closed by the remote host', None, 10054, None))
+2026-11-04 18:51:24,525 WARNING tick AI XAUUSD: OpenRouter request failed: HTTPSConnectionPool(host='openrouter.ai', port=443): Max retries exceeded with url: /api/v1/chat/completions (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1032)')))
+2026-11-04 18:51:27,927 WARNING tick AI GBPUSD: OpenRouter request failed: HTTPSConnectionPool(host='openrouter.ai', port=443): Max retries exceeded with url: /api/v1/chat/completions (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1032)')))
+2026-11-04 18:51:28,154 WARNING tick AI EURUSD: OpenRouter request failed: HTTPSConnectionPool(host='openrouter.ai', port=443): Max retries exceeded with url: /api/v1/chat/completions (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1032)')))
+2026-11-04 18:51:29,076 WARNING tick AI USDCAD: OpenRouter request failed: HTTPSConnectionPool(host='openrouter.ai', port=443): Max retries exceeded with url: /api/v1/chat/completions (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1032)')))
+2026-11-04 18:51:45,055 WARNING tick AI XAUUSD: OpenRouter request failed: HTTPSConnectionPool(host='openrouter.ai', port=443): Max retries exceeded with url: /api/v1/chat/completions (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1032)')))

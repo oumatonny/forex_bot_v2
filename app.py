@@ -13,7 +13,7 @@ What it does
     * Sizes every trade from account risk and the stop distance, attaches a
       broker-side SL and TP, and manages the position (break-even, ATR trail,
       time stop, opposite-signal exit).
-    * Enforces account-level limits: daily loss, trades per day, losing
+    * Enforces account-level limits: daily loss and losing
       streak, open-position caps, spread, session hours.
     * Backtests the very same strategy code so you can see what each rule set
       has actually done on your symbol/timeframe before switching it on.
@@ -86,13 +86,19 @@ except ImportError:
 # CONSTANTS & FILES
 # ============================================================================
 BOT_MAGIC = 234500          # this bot's own orders/positions (distinct from the older bots)
+TICK_MAGIC = 234600
+TICK_MIN_PROFIT = 0.05
 WARMUP = 210                # bars needed before the slowest indicator (EMA 200) is usable
 TF_SECONDS = {"M1": 60, "M5": 300, "M15": 900, "M30": 1800, "H1": 3600, "H4": 14400, "D1": 86400}
 DEFAULT_SYMBOLS = ['EURUSD', 'GBPUSD', 'USDJPY', 'AUDUSD', 'USDCAD', 'NZDUSD', 'XAUUSD', 'BTCUSD']
 
+OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
+DEFAULT_AI_MODEL = "openai/gpt-4o-mini"
+
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "bot_data"
 TRADES_CSV = DATA_DIR / "trades.csv"
+TICK_TRADES_CSV = DATA_DIR / "tick_trades.csv"
 SETTINGS_JSON = DATA_DIR / "settings.json"
 LOG_FILE = DATA_DIR / "bot.log"
 STRATEGIES_JSON = BASE_DIR / "strategies.json"
@@ -152,7 +158,6 @@ class Settings:
     max_per_symbol: int = 1
     max_per_currency: int = 2
     daily_loss_pct: float = 3.0
-    max_daily_trades: int = 10
     max_consec_losses: int = 3
     cooldown_bars: int = 3
     # trade plan
@@ -171,6 +176,11 @@ class Settings:
     reenter_in_range: bool = True    # after a profit-target close, re-enter while price is inside the signal's SL..TP
     max_reentries: int = 20          # per setup, 0 = unlimited
     exit_on_opposite: bool = True
+    # AI (OpenRouter)
+    ai_model: str = DEFAULT_AI_MODEL
+    ai_min_conf: int = 65            # AI analyst: below this confidence its view counts as HOLD
+    ai_confirm: bool = False         # every rule entry also needs the AI to agree
+    ai_fallback_allow: bool = False  # ai_confirm: trade on rules alone when the AI call fails
     # filters
     session_start: int = 0           # broker server hours
     session_end: int = 24
@@ -541,6 +551,12 @@ STRATEGIES = {
                                "Close through the 20-bar high/low on above-average volume."),
     'smc': StrategyDef("ICT/SMC sweep + FVG", 'trend', s_smc, (),
                        "Liquidity sweep rejection, or first retrace into a fair value gap left by a structure break."),
+    # fn=None: the AI is not a pure (A, i) function - the live engine and scanner call it once per
+    # closed bar (see analyze_bars_ai). Backtests and history markers skip it.
+    'ai_analyst': StrategyDef("AI analyst (OpenRouter LLM)", 'trend', None, (),
+                              "An LLM reads the last 60 candles, indicators, HTF trend and the other rule signals, "
+                              "and calls BUY/SELL/HOLD with a stop and target. Below the min confidence it is HOLD. "
+                              "Live/scanner only - not backtested."),
 }
 
 # strategies.json id -> (status, how the bot uses it). Ids covered by a rule set
@@ -574,6 +590,8 @@ def evaluate_signals(A, i, keys, htf_trend, use_htf):
     if i < 25:
         return signals, filtered
     for key in keys:
+        if STRATEGIES[key].fn is None:      # AI analyst - evaluated separately, once per live bar
+            continue
         sig = STRATEGIES[key].fn(A, i)
         if sig is None or not np.isfinite(sig.sl):
             continue
@@ -596,6 +614,100 @@ def combine_signals(signals, min_votes):
     if len(sells) - len(buys) >= min_votes:
         return sells[0][0], sells[0][1], len(sells)
     return None
+
+
+# ----------------------------------------------------------------------------
+# AI analyst on closed bars (OpenRouter). Used by the live engine and scanner.
+# ----------------------------------------------------------------------------
+BAR_AI_SYSTEM = (
+    "You are a disciplined professional FX/CFD price-action and technical analyst. You receive the last closed "
+    "candles of one symbol (oldest first), current indicator values, the higher-timeframe trend and what a set of "
+    "rule-based strategies say about the latest candle. Decide whether a trade should be opened NOW at the next "
+    "candle's open, held for intraday swing (several candles). Weigh trend structure, momentum, key levels, "
+    "volatility and confluence with the rule signals. The rule signals are only extra context: an empty list does "
+    "not mean there is no trade - make your own independent read of the chart. Only call BUY or SELL when the edge "
+    "is clear; otherwise HOLD. "
+    "The stop must sit beyond a logical structure level (typically 1-3 ATR) and the target at a realistic level "
+    "with reward >= 1.2x risk. Respond with ONLY a JSON object: "
+    '{"verdict": "BUY"|"SELL"|"HOLD", "confidence": 0-100, "stop_loss": price|null, "take_profit": price|null, '
+    '"reason": "one or two short sentences"}'
+)
+
+
+def build_bar_ai_context(sym, timeframe, A, i, htf_trend, signals, digits=5, n=60):
+    r = lambda x: None if x is None or not np.isfinite(x) else round(float(x), digits)
+    lo = max(0, i - n + 1)
+    last = {k: r(A[k][i]) for k in ('ema20', 'ema50', 'ema200', 'bb_up', 'bb_mid', 'bb_lo', 'atr',
+                                    'swing_hi', 'swing_lo', 'piv', 'r1', 's1', 'r2', 's2', 'don_hi', 'don_lo')}
+    last.update({k: None if not np.isfinite(A[k][i]) else round(float(A[k][i]), 2)
+                 for k in ('rsi14', 'adx', 'stoch_k', 'stoch_d')})
+    last['macd_hist'] = None if not np.isfinite(A['macd_hist'][i]) else float(f"{A['macd_hist'][i]:.3g}")
+    return {
+        "symbol": sym, "timeframe": timeframe, "last_closed_bar": str(A['time'][i]),
+        "htf_trend": {1: "up", -1: "down", 0: "flat"}.get(int(htf_trend), "flat"),
+        "indicators_on_last_bar": last,
+        "rule_signals_on_last_bar": [{"strategy": STRATEGIES[k].name, "side": "BUY" if s.direction == 1 else "SELL",
+                                      "reason": s.reason} for k, s in signals],
+        "candles_format": "[open, high, low, close, tick_volume]",
+        "candles_oldest_first": [[r(A['open'][k]), r(A['high'][k]), r(A['low'][k]), r(A['close'][k]),
+                                  int(A['tick_volume'][k])] for k in range(lo, i + 1)],
+    }
+
+
+def parse_bar_ai(raw, close, atr, min_conf):
+    """-> view dict, or None if unparseable. view['signal'] is a Signal or None (HOLD / low confidence)."""
+    match = re.search(r"\{.*\}", raw or "", re.DOTALL)
+    if not match:
+        return None
+    try:
+        data = json.loads(match.group(0))
+    except json.JSONDecodeError:
+        return None
+    verdict = str(data.get("verdict", "HOLD")).upper().strip()
+    verdict = {"LONG": "BUY", "SHORT": "SELL"}.get(verdict, verdict)
+    if verdict not in ("BUY", "SELL"):
+        verdict = "HOLD"
+    try:
+        conf = max(0.0, min(100.0, float(data.get("confidence", 0))))
+    except (TypeError, ValueError):
+        conf = 0.0
+
+    def price(key):
+        try:
+            v = float(data.get(key))
+            return v if np.isfinite(v) and v > 0 else None
+        except (TypeError, ValueError):
+            return None
+
+    view = {"verdict": verdict, "confidence": conf, "reason": str(data.get("reason", ""))[:240],
+            "direction": {"BUY": 1, "SELL": -1}.get(verdict, 0), "signal": None}
+    if view["direction"] and conf >= min_conf and np.isfinite(atr) and atr > 0:
+        d = view["direction"]
+        sl, tp = price("stop_loss"), price("take_profit")
+        if sl is None or (close - sl) * d <= 0:          # stop on the wrong side -> sensible default
+            sl = close - d * 1.5 * atr
+        if tp is not None and (tp - close) * d <= 0:
+            tp = None                                    # build_plan falls back to the R multiple
+        view["signal"] = Signal(d, sl, tp, f"AI {conf:.0f}%: {view['reason'][:120]}")
+    return view
+
+
+def analyze_bars_ai(sym, timeframe, A, i, htf_trend, signals, model, api_key, min_conf, digits=5):
+    """Blocking. Returns (view, error)."""
+    ctx = build_bar_ai_context(sym, timeframe, A, i, htf_trend, signals, digits)
+    messages = [{"role": "system", "content": BAR_AI_SYSTEM},
+                {"role": "user", "content": json.dumps(_finite(ctx), separators=(",", ":"))}]
+    raw, err = call_openrouter(messages, model, api_key, timeout=40, max_tokens=350)
+    if raw is None:
+        return None, err
+    view = parse_bar_ai(raw, float(A['close'][i]), float(A['atr'][i]), min_conf)
+    return (view, None) if view else (None, f"unparseable AI reply: {raw[:120]}")
+
+
+def ai_view_text(view, err=None):
+    if view is None:
+        return f"AI error: {err}" if err else "-"
+    return f"{view['verdict']} {view['confidence']:.0f}% - {view['reason']}"
 
 
 @dataclass
@@ -832,7 +944,8 @@ def _filling_modes(info):
     return order
 
 
-def _send_deal(symbol, order_type, volume, deviation, comment, sl=0.0, tp=0.0, position=None):
+def _send_deal(symbol, order_type, volume, deviation, comment, sl=0.0, tp=0.0,
+               position=None, magic=BOT_MAGIC):
     """Market deal with retries on requote/price change and filling-mode fallback. Returns (result|None, message)."""
     info = mt('symbol_info', symbol)
     if info is None:
@@ -847,7 +960,7 @@ def _send_deal(symbol, order_type, volume, deviation, comment, sl=0.0, tp=0.0, p
         request = {
             "action": mt5.TRADE_ACTION_DEAL, "symbol": symbol, "volume": float(volume), "type": order_type,
             "price": tick.ask if order_type == mt5.ORDER_TYPE_BUY else tick.bid,
-            "deviation": int(deviation), "magic": BOT_MAGIC, "comment": comment[:31],
+            "deviation": int(deviation), "magic": int(magic), "comment": comment[:31],
             "type_time": mt5.ORDER_TIME_GTC, "type_filling": fillings[0],
         }
         if sl:
@@ -873,7 +986,7 @@ def _send_deal(symbol, order_type, volume, deviation, comment, sl=0.0, tp=0.0, p
     return None, message
 
 
-def live_close_ticket(ticket, deviation=20, comment="SuperBot close"):
+def live_close_ticket(ticket, deviation=20, comment="SuperBot close", magic=BOT_MAGIC):
     """(ok, message). ok is True when the position is closed or already gone."""
     positions = mt('positions_get', ticket=int(ticket))
     if positions is None:
@@ -882,7 +995,8 @@ def live_close_ticket(ticket, deviation=20, comment="SuperBot close"):
         return True, "already closed"
     p = positions[0]
     close_type = mt5.ORDER_TYPE_SELL if p.type == mt5.POSITION_TYPE_BUY else mt5.ORDER_TYPE_BUY
-    result, message = _send_deal(p.symbol, close_type, p.volume, deviation, comment, position=p.ticket)
+    result, message = _send_deal(p.symbol, close_type, p.volume, deviation, comment,
+                                 position=p.ticket, magic=magic)
     return result is not None, message
 
 
@@ -893,10 +1007,625 @@ def close_all_bot_positions():
         return ["Could not read positions from MT5."]
     out = []
     for p in positions:
-        if p.magic == BOT_MAGIC:
+        if p.magic == magic:
             ok, message = live_close_ticket(p.ticket)
             out.append(f"#{p.ticket} {p.symbol}: {'closed' if ok else 'FAILED - ' + message}")
     return out or ["No positions with this bot's magic number."]
+
+
+# ============================================================================
+# TICK SCALPER
+# ============================================================================
+TICK_STRATEGY_NAMES = {
+    "S1": "Tick Momentum Burst", "S2": "Micro Mean-Reversion",
+    "S3": "Range Ping-Pong", "S4": "5-Second Bar Breakout",
+    "S5": "Tick Order-Flow Imbalance", "S6": "Tick-VWAP Pullback",
+    "S7": "Micro Squeeze Breakout", "S8": "Spread-Normalisation Fade",
+}
+
+
+@dataclass
+class TickSignal:
+    strategy: str
+    direction: int
+    stop: float
+    target: float
+    reason: str
+    max_hold: float
+
+
+@dataclass
+class TickCalibration:
+    symbol: str
+    tick_rate: float
+    avg_spread: float
+    p90_spread: float
+    move_5s: float
+    cost_ratio: float
+    efficiency_ratio: float
+    trend_slope: float
+    range_hi: float
+    range_lo: float
+    range_p10: float
+    range_p90: float
+    tick_z_sd: float
+    uptick_ratio: float
+    velocity_threshold: float
+    z_entry: float
+    avg_range_10s: float
+    enabled: tuple = ()
+    tradeable: bool = False
+    reason: str = ""
+
+
+@dataclass
+class TickState:
+    symbol: str
+    ticks: deque
+    calibration: TickCalibration
+    last_mid: float = 0.0
+    last_tick_time: float = 0.0
+    strategy_cooldowns: dict = field(default_factory=dict)
+    disabled: set = field(default_factory=set)
+
+
+def _tick_frame(ticks):
+    """Normalise MT5 or CSV ticks to causal time/bid/ask/mid columns."""
+    if ticks is None:
+        return pd.DataFrame(columns=["time", "bid", "ask", "mid"])
+    frame = pd.DataFrame(ticks).copy()
+    names = {str(c).lower(): c for c in frame.columns}
+    for required in ("time", "bid", "ask"):
+        if required not in names:
+            raise ValueError(f"tick data requires {required}")
+    frame = frame.rename(columns={names["time"]: "time", names["bid"]: "bid", names["ask"]: "ask"})
+    if pd.api.types.is_numeric_dtype(frame["time"]):
+        frame["time"] = pd.to_datetime(frame["time"], unit="s", utc=True)
+    else:
+        frame["time"] = pd.to_datetime(frame["time"], utc=True)
+    frame = frame.sort_values("time").drop_duplicates("time")
+    frame["mid"] = (frame["bid"].astype(float) + frame["ask"].astype(float)) / 2
+    return frame.reset_index(drop=True)
+
+
+def calculate_tick_calibration(ticks, symbol, commission_in_points=0.0, expected_slippage=0.0):
+    """Calculate calibration metrics without using any tick after the input window."""
+    frame = _tick_frame(ticks)
+    if len(frame) < 10:
+        raise ValueError(f"{symbol}: at least 10 ticks are required for calibration")
+    mid = frame["mid"].to_numpy()
+    spread = (frame["ask"] - frame["bid"]).to_numpy()
+    dt = frame["time"].astype("int64").to_numpy() / 1e9
+    elapsed = max(float(dt[-1] - dt[0]), 1e-9)
+    tick_rate = len(frame) / elapsed
+    typical = max(float(np.median(np.abs(mid - np.roll(mid, 1))[1:])), 1e-12)
+    step = max(1, int(round(5 * tick_rate)))
+    changes = np.abs(mid[step:] - mid[:-step]) if len(mid) > step else np.array([typical])
+    move_5s = max(float(np.median(changes)), typical)
+    moves = np.diff(mid)
+    er = abs(float(mid[-1] - mid[0])) / max(float(np.abs(moves).sum()), 1e-12)
+    x = np.arange(len(mid), dtype=float)
+    slope = float(np.polyfit(x, mid, 1)[0]) * len(mid) / move_5s
+    roll_mean = pd.Series(mid).rolling(max(2, int(30 * tick_rate)), min_periods=2).mean()
+    z_sd = max(float(np.nanstd(mid - roll_mean.to_numpy())), 1e-12)
+    abs_z = np.abs((mid - roll_mean.to_numpy()) / z_sd)
+    velocity = np.abs(pd.Series(mid).diff(max(1, int(2 * tick_rate))).dropna().to_numpy())
+    avg_spread = float(np.mean(spread))
+    cost_ratio = (avg_spread + commission_in_points + expected_slippage) / move_5s
+    ranges = pd.Series(mid).groupby(np.arange(len(mid)) // max(1, int(10 * tick_rate))).agg(lambda x: x.max() - x.min())
+    avg_range = max(float(ranges.mean()) if len(ranges) else move_5s, 1e-12)
+    enabled = []
+    if cost_ratio <= 0.5:
+        if er > 0.35:
+            enabled = ["S1", "S4", "S5", "S6"]
+        elif er < 0.15 and mid.max() - mid.min() > 8 * avg_spread:
+            enabled = ["S2", "S3"]
+        else:
+            enabled = ["S7"]
+    return TickCalibration(
+        symbol=symbol, tick_rate=tick_rate, avg_spread=avg_spread,
+        p90_spread=float(np.percentile(spread, 90)), move_5s=move_5s,
+        cost_ratio=cost_ratio, efficiency_ratio=er, trend_slope=slope,
+        range_hi=float(mid.max()), range_lo=float(mid.min()),
+        range_p10=float(np.percentile(mid, 10)), range_p90=float(np.percentile(mid, 90)),
+        tick_z_sd=z_sd, uptick_ratio=float(np.mean(moves > 0)) if len(moves) else 0.5,
+        velocity_threshold=float(np.percentile(velocity, 90)) if len(velocity) else move_5s,
+        z_entry=float(np.percentile(abs_z, 95)), avg_range_10s=avg_range,
+        enabled=tuple(enabled), tradeable=cost_ratio <= 0.5,
+        reason=("spread eats {:.0%} of a typical 5-s move".format(cost_ratio)
+                if cost_ratio > 0.5 else "calibrated"),
+    )
+
+
+def _recent_tick_features(state):
+    frame = _tick_frame(list(state.ticks))
+    if len(frame) < 3:
+        return frame, 0.0, 0.0
+    mid = frame["mid"].to_numpy()
+    direction = int(np.sign(mid[-1] - mid[-2]))
+    rate = len(frame) / max((frame["time"].iloc[-1] - frame["time"].iloc[0]).total_seconds(), 1e-9)
+    return frame, direction, rate
+
+
+def tick_strategy_signal(strategy, state):
+    """Pure causal signal function. It never mutates TickState."""
+    c = state.calibration
+    if strategy not in c.enabled or strategy in state.disabled or not c.tradeable:
+        return None
+    frame, last_dir, rate = _recent_tick_features(state)
+    if len(frame) < 4:
+        return None
+    mid = float(frame["mid"].iloc[-1])
+    spread = float(frame["ask"].iloc[-1] - frame["bid"].iloc[-1])
+    moves = np.diff(frame["mid"].to_numpy())
+    n = max(1, min(8, len(moves)))
+    same = int(np.sum(np.sign(moves[-n:]) == last_dir)) == n and last_dir != 0
+    velocity = abs(float(frame["mid"].iloc[-1] - frame["mid"].iloc[max(0, len(frame) - max(2, int(c.tick_rate * 2)))]))
+    if strategy == "S1" and same and velocity >= c.velocity_threshold and last_dir == int(np.sign(c.trend_slope)):
+        d = last_dir
+        return TickSignal(strategy, d, mid - d * (c.move_5s + spread), mid + d * 1.25 * c.move_5s, "momentum burst", 10)
+    if strategy == "S2":
+        mean = float(frame["mid"].tail(max(2, int(c.tick_rate * 30))).mean())
+        z = (mid - mean) / c.tick_z_sd
+        if z >= c.z_entry:
+            return TickSignal(strategy, -1, mid + 4 * c.tick_z_sd + spread, mean, "z-score fade", 15)
+        if z <= -c.z_entry:
+            return TickSignal(strategy, 1, mid - 4 * c.tick_z_sd - spread, mean, "z-score fade", 15)
+    if strategy == "S3" and last_dir:
+        if mid <= c.range_p10:
+            return TickSignal(strategy, 1, c.range_lo - spread, (c.range_lo + c.range_hi) / 2, "range low ping", 15)
+        if mid >= c.range_p90:
+            return TickSignal(strategy, -1, c.range_hi + spread, (c.range_lo + c.range_hi) / 2, "range high ping", 15)
+    if strategy == "S5" and rate >= c.tick_rate:
+        ratio = float(np.mean(moves[-max(3, int(c.tick_rate * 3)):] > 0))
+        if ratio > .70:
+            return TickSignal(strategy, 1, mid - c.move_5s - spread, mid + c.move_5s, "order-flow imbalance", 15)
+        if ratio < .30:
+            return TickSignal(strategy, -1, mid + c.move_5s + spread, mid - c.move_5s, "order-flow imbalance", 15)
+    return None
+
+
+# ----------------------------------------------------------------------------
+# AI advisor for the tick scalper (OpenRouter). LLM calls take seconds, so they
+# never sit in the 100 ms tick loop: a background thread refreshes a per-symbol
+# "market read" every few seconds and the rule-based signals are gated by it.
+# ----------------------------------------------------------------------------
+DEFAULT_TICK_AI_MODEL = DEFAULT_AI_MODEL
+TICK_STRATEGY_STYLE = {"S1": "momentum burst (trend-following)", "S2": "z-score fade (mean reversion)",
+                       "S3": "range edge ping (mean reversion)", "S4": "trend", "S5": "order-flow imbalance",
+                       "S6": "trend", "S7": "mixed"}
+TICK_AI_SYSTEM = (
+    "You are a quantitative FX/CFD microstructure analyst assisting a tick scalper that holds trades for "
+    "seconds to a few minutes. You receive tick statistics and recent M1 candles for one symbol. Judge the "
+    "short-term (next 1-5 minutes) directional bias and which scalping styles fit the current regime. "
+    "Be conservative: if the picture is mixed, choppy, or costs are high relative to movement, answer NEUTRAL "
+    "with low confidence. Respond with ONLY a JSON object, no prose, with keys: "
+    '{"bias": "LONG"|"SHORT"|"NEUTRAL", "confidence": 0-100, "regime": "trending"|"ranging"|"choppy"|"volatile", '
+    '"allow_strategies": [strategy ids that suit this regime], "reason": "one short sentence"}'
+)
+
+
+def openrouter_key():
+    key = (st.session_state.get('openrouter_key') if _in_streamlit() else None) or os.environ.get("OPENROUTER_API_KEY") or ""
+    return key.strip().strip('"\'') or None
+
+
+def _in_streamlit():
+    try:
+        from streamlit.runtime.scriptrunner import get_script_run_ctx
+        return get_script_run_ctx() is not None
+    except Exception:
+        return False
+
+
+def call_openrouter(messages, model, api_key, timeout=20, temperature=0.1, max_tokens=300):
+    """Returns (content, error). Never raises."""
+    if not api_key:
+        return None, "OPENROUTER_API_KEY not set"
+    if requests is None:
+        return None, "the 'requests' package is not installed"
+    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json",
+               "HTTP-Referer": "https://tradepilot.local", "X-OpenRouter-Title": "TradePilot Tick Scalper"}
+    payload = {"model": model, "messages": messages, "temperature": temperature,
+               "max_tokens": max_tokens, "response_format": {"type": "json_object"}}
+    try:
+        resp = requests.post(OPENROUTER_API_URL, headers=headers, json=payload, timeout=timeout)
+        if resp.status_code == 400 and "response_format" in resp.text:
+            payload.pop("response_format")       # some models don't support JSON mode
+            resp = requests.post(OPENROUTER_API_URL, headers=headers, json=payload, timeout=timeout)
+    except requests.exceptions.RequestException as exc:
+        return None, f"OpenRouter request failed: {exc}"
+    if resp.status_code == 401:
+        return None, "OpenRouter HTTP 401 - check OPENROUTER_API_KEY in .env (restart the app after editing)"
+    if resp.status_code != 200:
+        return None, f"OpenRouter HTTP {resp.status_code}: {resp.text[:200]}"
+    try:
+        return resp.json()["choices"][0]["message"]["content"], None
+    except (KeyError, IndexError, ValueError) as exc:
+        return None, f"unexpected OpenRouter response: {exc}"
+
+
+def parse_tick_ai(raw, enabled):
+    if not raw:
+        return None
+    match = re.search(r"\{.*\}", raw, re.DOTALL)
+    if not match:
+        return None
+    try:
+        data = json.loads(match.group(0))
+    except json.JSONDecodeError:
+        return None
+    bias = str(data.get("bias", "NEUTRAL")).upper().strip()
+    bias = {"BUY": "LONG", "SELL": "SHORT"}.get(bias, bias)
+    if bias not in ("LONG", "SHORT", "NEUTRAL"):
+        bias = "NEUTRAL"
+    try:
+        confidence = max(0.0, min(100.0, float(data.get("confidence", 0))))
+    except (TypeError, ValueError):
+        confidence = 0.0
+    allow = data.get("allow_strategies", [])
+    allow = [str(a).upper().strip() for a in (allow if isinstance(allow, list) else [allow])]
+    return {"bias": bias, "direction": {"LONG": 1, "SHORT": -1}.get(bias, 0), "confidence": confidence,
+            "regime": str(data.get("regime", ""))[:20], "allow": [a for a in allow if a in enabled],
+            "reason": str(data.get("reason", ""))[:200]}
+
+
+def build_tick_ai_context(state, bars=None):
+    """Compact numeric snapshot of one symbol - only past data, nothing look-ahead."""
+    c = state.calibration
+    frame = _tick_frame(list(state.ticks))
+    if len(frame) < 10 or c is None:
+        return None
+    t = frame["time"]
+    mid = frame["mid"]
+    last_t, last = t.iloc[-1], float(mid.iloc[-1])
+    scale = c.move_5s or 1e-12
+
+    def ret(sec):
+        past = mid[t <= last_t - pd.Timedelta(seconds=sec)]
+        return round((last - float(past.iloc[-1])) / scale, 2) if len(past) else None
+
+    w60 = frame[t >= last_t - pd.Timedelta(seconds=60)]
+    moves = np.diff(w60["mid"].to_numpy())
+    mean30 = float(mid[t >= last_t - pd.Timedelta(seconds=30)].mean())
+    ctx = {
+        "symbol": state.symbol,
+        "note": "returns are in units of a typical 5-second move (move_5s)",
+        "returns_vs_move5s": {"5s": ret(5), "15s": ret(15), "30s": ret(30), "60s": ret(60), "180s": ret(180)},
+        "last_60s": {"ticks": int(len(w60)), "uptick_ratio": round(float(np.mean(moves > 0)), 2) if len(moves) else None,
+                     "high_low_range_vs_move5s": round(float(w60["mid"].max() - w60["mid"].min()) / scale, 2)},
+        "zscore_vs_30s_mean": round((last - mean30) / c.tick_z_sd, 2),
+        "spread_now_vs_avg": round(float(frame["ask"].iloc[-1] - frame["bid"].iloc[-1]) / max(c.avg_spread, 1e-12), 2),
+        "calibration": {"cost_ratio": round(c.cost_ratio, 3), "efficiency_ratio": round(c.efficiency_ratio, 3),
+                        "trend_slope": round(c.trend_slope, 2), "tick_rate_per_s": round(c.tick_rate, 2),
+                        "position_in_calibration_range": round((last - c.range_lo) / max(c.range_hi - c.range_lo, 1e-12), 2)},
+        "candidate_strategies": {k: TICK_STRATEGY_STYLE.get(k, k) for k in c.enabled},
+    }
+    if bars is not None and len(bars):
+        b = bars.tail(20)
+        ctx["m1_candles_oldest_first"] = [[round(float(r.open), 6), round(float(r.high), 6), round(float(r.low), 6),
+                                           round(float(r.close), 6), int(r.tick_volume)] for r in b.itertuples()]
+        ctx["m1_format"] = "[open, high, low, close, tick_volume]"
+    return ctx
+
+
+def _finite(obj):
+    """NaN/inf -> None so the prompt is valid JSON."""
+    if isinstance(obj, dict):
+        return {k: _finite(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_finite(v) for v in obj]
+    if isinstance(obj, float) and not math.isfinite(obj):
+        return None
+    return obj
+
+
+class TickAIAdvisor:
+    """Non-blocking per-symbol market read. get() only ever returns a cached view."""
+    def __init__(self, model, api_key, refresh=20, max_age=60):
+        self.model, self.api_key = model, api_key
+        self.refresh, self.max_age = refresh, max_age
+        self.views, self.inflight, self.errors = {}, set(), {}
+        self.lock = threading.Lock()
+        self.calls = 0
+
+    def maybe_refresh(self, symbol, context_fn, enabled):
+        now = time.time()
+        with self.lock:
+            view = self.views.get(symbol)
+            if symbol in self.inflight or (view and now - view["ts"] < self.refresh):
+                return
+            if symbol in self.errors and now - self.errors[symbol]["ts"] < self.refresh:
+                return                                   # back off after a failure
+            self.inflight.add(symbol)
+        threading.Thread(target=self._fetch, args=(symbol, context_fn, enabled),
+                         name=f"tick-ai-{symbol}", daemon=True).start()
+
+    def _fetch(self, symbol, context_fn, enabled):
+        try:
+            ctx = context_fn()
+            if ctx is None:
+                return
+            messages = [{"role": "system", "content": TICK_AI_SYSTEM},
+                        {"role": "user", "content": json.dumps(_finite(ctx), separators=(",", ":"))}]
+            raw, err = call_openrouter(messages, self.model, self.api_key)
+            self.calls += 1
+            view = parse_tick_ai(raw, enabled) if raw else None
+            with self.lock:
+                if view:
+                    view["ts"] = time.time()
+                    self.views[symbol] = view
+                    self.errors.pop(symbol, None)
+                else:
+                    self.errors[symbol] = {"ts": time.time(), "error": err or f"unparseable reply: {str(raw)[:120]}"}
+                    log.warning("tick AI %s: %s", symbol, self.errors[symbol]["error"])
+        except Exception as exc:
+            with self.lock:
+                self.errors[symbol] = {"ts": time.time(), "error": str(exc)}
+            log.exception("tick AI advisor failed for %s", symbol)
+        finally:
+            with self.lock:
+                self.inflight.discard(symbol)
+
+    def get(self, symbol):
+        with self.lock:
+            view = self.views.get(symbol)
+            return view if view and time.time() - view["ts"] <= self.max_age else None
+
+    def snapshot(self):
+        with self.lock:
+            rows = {s: {k: v for k, v in view.items() if k != "direction"} | {"age_s": round(time.time() - view["ts"])}
+                    for s, view in self.views.items()}
+            for s, e in self.errors.items():
+                rows.setdefault(s, {})["error"] = e["error"]
+            return rows
+
+
+def ai_gate(view, signal, min_conf, fallback_allow):
+    """Returns (allowed, reason) for a rule signal given the AI's current view."""
+    if view is None:
+        return fallback_allow, "AI view unavailable - " + ("rules only" if fallback_allow else "blocked")
+    if view["confidence"] < min_conf:
+        return False, f"AI confidence {view['confidence']:.0f} < {min_conf:.0f} ({view['regime']})"
+    if view["allow"] and signal.strategy not in view["allow"]:
+        return False, f"AI regime '{view['regime']}' disfavours {signal.strategy}"
+    if view["direction"] == 0:
+        # Neutral bias only lets through mean-reversion styles the AI explicitly allowed.
+        if signal.strategy in view["allow"] and signal.strategy in ("S2", "S3"):
+            return True, f"AI neutral/{view['regime']}, mean-reversion allowed"
+        return False, f"AI neutral ({view['reason'][:60]})"
+    if view["direction"] != signal.direction:
+        return False, f"AI bias {view['bias']} opposes signal"
+    return True, f"AI {view['bias']} {view['confidence']:.0f}%: {view['reason'][:60]}"
+
+
+class TickScalper:
+    """Persistent event-driven tick engine. Paper mode is always safe by default."""
+    def __init__(self, symbols, minutes=5, mode="paper", lot=0.01, max_hold=15, max_orders_min=30,
+                 commission=0.0, slippage=0.0, news_blackout=False, ai=None, ai_min_conf=60,
+                 ai_fallback_allow=False):
+        self.ai, self.ai_min_conf, self.ai_fallback_allow = ai, ai_min_conf, ai_fallback_allow
+        self.ai_skip_logged = {}
+        self.requested_symbols, self.minutes, self.mode = list(symbols), int(minutes), mode
+        self.lot, self.max_hold, self.max_orders_min = lot, max_hold, max_orders_min
+        self.commission, self.slippage, self.news_blackout = commission, slippage, news_blackout
+        self.states, self.positions, self.decisions = {}, {}, deque(maxlen=50)
+        self.order_times = deque(maxlen=100)
+        self.status, self.phase, self.halt_reason = "idle", "IDLE", ""
+        self.started, self.last_cycle, self.session_pnl = 0.0, 0.0, 0.0
+        self.stop_evt, self.thread = threading.Event(), None
+        self.state_file = DATA_DIR / "state_tick.json"
+
+    def start(self):
+        if self.thread and self.thread.is_alive():
+            return
+        self.status, self.phase, self.started = "running", "CALIBRATING", time.time()
+        self.thread = threading.Thread(target=self._run, name="tick-scalper", daemon=True)
+        self.thread.start()
+
+    def stop(self, flatten=False):
+        self.stop_evt.set()
+        if flatten:
+            self.positions.clear()
+
+    def snapshot(self):
+        with MT5_LOCK:
+            return {"status": self.status, "phase": self.phase, "halt": self.halt_reason,
+                    "pnl": self.session_pnl, "last_cycle": self.last_cycle,
+                    "positions": list(self.positions.values()),
+                    "decisions": list(self.decisions),
+                    "ai": self.ai.snapshot() if self.ai else None,
+                    "ai_calls": self.ai.calls if self.ai else 0,
+                    "calibration": {k: asdict(v.calibration) for k, v in self.states.items()
+                                    if v.calibration is not None}}
+
+    def _run(self):
+        try:
+            if not MT5_AVAILABLE or not mt5_connect():
+                raise RuntimeError("MT5 is required for tick scalping")
+            for name in self.requested_symbols:
+                symbol = resolve_symbol(name)
+                if symbol:
+                    self.states[symbol] = TickState(symbol, deque(maxlen=10000), None)
+            if not self.states:
+                raise RuntimeError("No selected symbols are available")
+            while not self.stop_evt.wait(.1):
+                self._cycle()
+        except Exception as exc:
+            self.status, self.phase, self.halt_reason = "error", "HALTED", str(exc)
+            log.exception("tick scalper stopped")
+        finally:
+            if self.status != "error":
+                self.status, self.phase = "stopped", "STOPPED"
+
+    def _cycle(self):
+        now = time.time()
+        self.last_cycle = now
+        self._manage_positions(now)
+        for symbol, state in self.states.items():
+            tick = mt5.symbol_info_tick(symbol)
+            if tick is None:
+                continue
+            row = {"time": getattr(tick, "time_msc", getattr(tick, "time", now)) / (1000 if getattr(tick, "time_msc", 0) else 1),
+                   "bid": tick.bid, "ask": tick.ask}
+            state.ticks.append(row)
+            if state.calibration is None and now - self.started >= self.minutes * 60:
+                state.calibration = calculate_tick_calibration(list(state.ticks), symbol, self.commission, self.slippage)
+            if state.calibration is None:
+                continue
+            if state.calibration.cost_ratio > .5:
+                self.halt_reason = state.calibration.reason
+                continue
+            self.phase = "SCALPING"
+            if self.ai:
+                self.ai.maybe_refresh(symbol, lambda st_=state: build_tick_ai_context(st_, fetch_bars(st_.symbol, "M1", 20)),
+                                      state.calibration.enabled)
+            for key in state.calibration.enabled:
+                signal = tick_strategy_signal(key, state)
+                if signal and self.ai:
+                    allowed, why = ai_gate(self.ai.get(symbol), signal, self.ai_min_conf, self.ai_fallback_allow)
+                    if not allowed:
+                        if now - self.ai_skip_logged.get((symbol, key), 0) >= 10:   # don't flood the log
+                            self.ai_skip_logged[(symbol, key)] = now
+                            self.decisions.append({"time": datetime.now().isoformat(timespec="seconds"), "symbol": symbol,
+                                                   "strategy": key, "action": "AI_SKIP", "reason": why})
+                        continue
+                    signal.reason = f"{signal.reason} | {why}"
+                if signal:
+                    self.decisions.append({"time": datetime.now().isoformat(timespec="seconds"), "symbol": symbol,
+                                           "strategy": key, "action": "SIGNAL", "reason": signal.reason})
+                    self._try_entry(state, signal, now)
+        if self.phase == "SCALPING" and self.news_blackout:
+            hour = datetime.now(timezone.utc).hour
+            if hour == 23 or hour == 0:
+                self.phase, self.halt_reason = "HALTED", "news/rollover blackout"
+
+    def _try_entry(self, state, signal, now):
+        key = (state.symbol, signal.strategy)
+        if key in self.positions:
+            return
+        if self.order_times and now - self.order_times[-1] < 60 / self.max_orders_min:
+            return
+        if len(self.positions) >= 5:
+            self.decisions.append({"time": datetime.now().isoformat(timespec="seconds"), "symbol": state.symbol,
+                                   "strategy": signal.strategy, "action": "SKIP", "reason": "max open positions"})
+            return
+        tick = mt5.symbol_info_tick(state.symbol)
+        if tick is None:
+            return
+        spread = float(tick.ask - tick.bid)
+        if spread > 1.5 * state.calibration.avg_spread:
+            return
+        entry = float(tick.ask if signal.direction == 1 else tick.bid)
+        if self.mode == "live":
+            order_type = mt5.ORDER_TYPE_BUY if signal.direction == 1 else mt5.ORDER_TYPE_SELL
+            result, message = _send_deal(state.symbol, order_type, self.lot, 20, f"TS {signal.strategy}",
+                                         signal.stop, signal.target, magic=TICK_MAGIC)
+            if result is None:
+                self.decisions.append({"time": datetime.now().isoformat(timespec="seconds"), "symbol": state.symbol,
+                                       "strategy": signal.strategy, "action": "REJECT", "reason": message})
+                return
+            ticket = int(getattr(result, "order", 0))
+        else:
+            ticket = -len(self.positions) - 1
+        self.positions[key] = {"ticket": ticket, "symbol": state.symbol, "strategy": signal.strategy,
+                               "direction": signal.direction, "entry": entry, "sl": signal.stop,
+                               "tp": signal.target, "open_time": now, "reason": signal.reason}
+        self.order_times.append(now)
+
+    def _manage_positions(self, now):
+        for key, position in list(self.positions.items()):
+            tick = mt5.symbol_info_tick(position["symbol"])
+            if tick is None:
+                continue
+            close_price = float(tick.bid if position["direction"] == 1 else tick.ask)
+            order_type = (mt5.ORDER_TYPE_BUY if position["direction"] == 1
+                          else mt5.ORDER_TYPE_SELL)
+            gross = mt5.order_calc_profit(order_type, position["symbol"], self.lot,
+                                          position["entry"], close_price)
+            if gross is None:
+                continue
+            net_profit = float(gross) - self.commission * self.lot
+            if net_profit < TICK_MIN_PROFIT:
+                continue
+            if self.mode == "live":
+                ok, message = live_close_ticket(position["ticket"], comment="Tick profit target",
+                                                magic=TICK_MAGIC)
+                if not ok:
+                    self.decisions.append({"time": datetime.now().isoformat(timespec="seconds"),
+                                           "symbol": position["symbol"], "strategy": position["strategy"],
+                                           "action": "CLOSE_RETRY", "reason": message})
+                    continue
+            self.session_pnl += net_profit
+            self.decisions.append({"time": datetime.now().isoformat(timespec="seconds"),
+                                   "symbol": position["symbol"], "strategy": position["strategy"],
+                                   "action": "CLOSE", "reason": f"profit target +{net_profit:.2f}"})
+            del self.positions[key]
+
+
+def _tick_engine():
+    return st.session_state.get("tick_scalper")
+
+
+def tab_tick_scalper():
+    st.caption("Tick scalping is high-risk and cost-sensitive. Paper mode is the default; no profitability is guaranteed.")
+    engine = _tick_engine()
+    if engine and engine.status == "running":
+        snap = engine.snapshot()
+        st.metric("Phase", snap["phase"])
+        st.metric("Session P/L", f"{snap['pnl']:.2f}")
+        if st.button("STOP & FLATTEN", type="primary"):
+            engine.stop(flatten=True); st.rerun()
+        st.dataframe(pd.DataFrame(snap["decisions"]), hide_index=True, width="stretch")
+        if snap["ai"] is not None:
+            st.subheader(f"AI market read ({snap['ai_calls']} calls)")
+            if snap["ai"]:
+                st.dataframe(pd.DataFrame(snap["ai"]).T, width="stretch")
+            else:
+                st.caption("Waiting for calibration to finish before the first AI call.")
+        if snap["calibration"]:
+            st.subheader("Calibration Report")
+            st.dataframe(pd.DataFrame(snap["calibration"]).T, width="stretch")
+        return
+    symbols = st.multiselect("Symbols", DEFAULT_SYMBOLS, DEFAULT_SYMBOLS[:3])
+    minutes = st.slider("Calibration length (minutes)", 1, 15, 5)
+    mode = st.radio("Mode", ["Paper", "Live"], horizontal=True)
+    real_confirmation = st.text_input("Type REAL to arm live tick orders", type="password") if mode == "Live" else ""
+    lot = st.number_input("Lot size", min_value=.01, max_value=100.0, value=.01, step=.01)
+    st.caption(f"Exit rule: close only at net profit >= +{TICK_MIN_PROFIT:.2f}; no time-stop exits.")
+    commission = st.number_input("Commission (account currency per lot)", min_value=0.0, value=0.0)
+    news_blackout = st.checkbox("Manual news blackout")
+    use_ai = st.checkbox("AI confirmation filter (OpenRouter)", value=True,
+                         help="An LLM reads recent ticks + M1 candles every few seconds and rule signals only "
+                              "enter when they agree with its bias/regime. Fewer trades, higher selectivity.")
+    ai_model, ai_conf, ai_refresh, ai_fallback = DEFAULT_TICK_AI_MODEL, 60, 20, False
+    if use_ai:
+        if not openrouter_key():
+            st.caption("Add your OpenRouter key in the sidebar > AI analysis, or OPENROUTER_API_KEY in .env.")
+        c1, c2 = st.columns(2)
+        ai_model = c1.text_input("AI model", os.environ.get("OPENROUTER_MODEL", DEFAULT_TICK_AI_MODEL),
+                                 help="Any OpenRouter model id, e.g. openai/gpt-4o, openai/gpt-4o-mini.")
+        ai_refresh = c2.slider("AI refresh (seconds per symbol)", 5, 120, 20,
+                               help="Each refresh is one API call per symbol - lower = fresher but costlier.")
+        ai_conf = c1.slider("Min AI confidence to trade", 0, 100, 60)
+        ai_fallback = c2.radio("If AI is unavailable", ["Block trades", "Rules only"], horizontal=True) == "Rules only"
+        if not openrouter_key():
+            st.warning("No OpenRouter key found - the AI filter can't run.")
+    if mode == "Live":
+        st.warning("Live tick scalping requires the existing arming flow and typed REAL confirmation.")
+    if st.button("START TICK SCALPER", type="primary",
+                 disabled=not symbols or (mode == "Live" and real_confirmation != "REAL")
+                          or (use_ai and not openrouter_key())):
+        advisor = (TickAIAdvisor(ai_model.strip() or DEFAULT_TICK_AI_MODEL, openrouter_key(),
+                                 refresh=ai_refresh, max_age=max(60, 3 * ai_refresh)) if use_ai else None)
+        engine = TickScalper(symbols, minutes, "live" if mode == "Live" else "paper", lot=lot,
+                             max_orders_min=30, commission=commission, slippage=0.0,
+                             news_blackout=news_blackout, ai=advisor, ai_min_conf=ai_conf,
+                             ai_fallback_allow=ai_fallback)
+        st.session_state["tick_scalper"] = engine
+        engine.start()
+        st.rerun()
+    st.info("Calibration blocks symbols where spread and execution costs exceed half of a typical five-second move.")
 
 
 # ============================================================================
@@ -957,6 +1686,8 @@ class Engine:
         self.retry_entries = {}           # sym -> (key, sig, votes, atr, bar) refused only because trading was off
         self.setups = {}                  # sym -> active signal range (SL..TP) that is re-entered after profit closes
         self.reanalyse = set()            # symbols whose setup hit TP: evaluate again without waiting for a new bar
+        self.ai_key = openrouter_key()    # captured here: the engine thread has no Streamlit session
+        self.ai_jobs = {}                 # sym -> in-flight AI analysis for the latest closed bar
         self.state_file = DATA_DIR / f"state_{settings.mode}.json"
 
     # ---- lifecycle ---------------------------------------------------------
@@ -1032,6 +1763,8 @@ class Engine:
         self.day = raw.get('day')
         self.day_start_equity = raw.get('day_start_equity')
         self.day_halt = raw.get('day_halt')
+        if self.day_halt and 'trades opened today' in self.day_halt:
+            self.day_halt = None
         self.opened_today = raw.get('opened_today', 0)
         self.cooldown_until = raw.get('cooldown_until', {})
         self.paper_seq = raw.get('paper_seq', 1)
@@ -1085,6 +1818,7 @@ class Engine:
                 self.last_bar[sym] = bar_time
                 self.retry_entries.pop(sym, None)
                 self._evaluate(sym, trade=True)
+        self._resolve_ai()
         if self.retry_entries and not self.trade_block:
             # Trading was switched back on while the signal's bar is still the latest one: take it now.
             for sym, (key, sig, votes, atr, bar) in list(self.retry_entries.items()):
@@ -1151,8 +1885,6 @@ class Engine:
             streak += 1
         if reason is None and 0 < self.s.max_consec_losses <= streak:
             reason = f"{streak} losses in a row"
-        if reason is None and 0 < self.s.max_daily_trades <= self.opened_today:
-            reason = f"{self.opened_today} trades opened today (limit)"
         if reason:
             self.day_halt = reason
             self._note('ENGINE', '', 'HALTED', f"{reason} - no new entries until the next server day")
@@ -1190,6 +1922,62 @@ class Engine:
         }
         if not trade:
             return
+        if 'ai_analyst' in self.s.strategies or (self.s.ai_confirm and signals):
+            self._start_ai(sym, A, i, htf_trend, signals, filtered, atr)
+            return
+        self._decide(sym, signals, filtered, atr, htf_trend)
+
+    # ---- AI analyst (async: an LLM call takes seconds, position management must not wait) ----
+    def _start_ai(self, sym, A, i, htf_trend, signals, filtered, atr):
+        job = {'bar': self.last_bar.get(sym), 'started': time.time(), 'done': False, 'result': (None, None),
+               'args': (signals, filtered, atr, htf_trend)}
+        if not self.ai_key:
+            job['done'], job['result'] = True, (None, "no OPENROUTER_API_KEY")
+            self.ai_jobs[sym] = job
+            return
+        info = mt('symbol_info', sym)
+        digits = int(getattr(info, 'digits', 5) or 5)
+
+        def work():
+            try:
+                job['result'] = analyze_bars_ai(sym, self.s.timeframe, A, i, htf_trend, signals,
+                                                self.s.ai_model, self.ai_key, self.s.ai_min_conf, digits)
+            except Exception as exc:          # never let the AI thread take anything down
+                job['result'] = (None, str(exc))
+            finally:
+                job['done'] = True
+
+        self.ai_jobs[sym] = job
+        self.symbol_state.setdefault(sym, {})['ai'] = "analysing..."
+        threading.Thread(target=work, name=f"bar-ai-{sym}", daemon=True).start()
+
+    def _resolve_ai(self):
+        for sym, job in list(self.ai_jobs.items()):
+            timed_out = time.time() - job['started'] > 60
+            if not job['done'] and not timed_out:
+                continue
+            del self.ai_jobs[sym]
+            view, err = job['result'] if job['done'] else (None, "timed out after 60 s")
+            if job['bar'] != self.last_bar.get(sym):
+                self._note(sym, 'ai_analyst', 'SKIPPED', "AI reply arrived after a new bar closed - discarded")
+                continue
+            self.symbol_state.setdefault(sym, {})['ai'] = ai_view_text(view, err)
+            signals, filtered, atr, htf_trend = job['args']
+            self._decide(sym, signals, filtered, atr, htf_trend, view=view, ai_err=err, ai_used=True)
+
+    def _decide(self, sym, signals, filtered, atr, htf_trend, view=None, ai_err=None, ai_used=False):
+        signals, filtered = list(signals), list(filtered)
+        if ai_used:
+            self._note(sym, 'ai_analyst', 'INFO', ai_view_text(view, ai_err))
+            sig = view['signal'] if view else None
+            if 'ai_analyst' in self.s.strategies and sig is not None:
+                if self.s.use_htf_filter and htf_trend != sig.direction:
+                    filtered.append(f"ai_analyst {'BUY' if sig.direction == 1 else 'SELL'} dropped: HTF trend is "
+                                    f"{ {1: 'up', -1: 'down', 0: 'flat'}[int(htf_trend)] }")
+                else:
+                    signals.append(('ai_analyst', sig))
+                    state = self.symbol_state.setdefault(sym, {})
+                    state['signals'] = state.get('signals', []) + [f"ai_analyst: {'BUY' if sig.direction == 1 else 'SELL'}"]
 
         if self.s.exit_on_opposite:
             with self.lock:
@@ -1197,6 +1985,21 @@ class Engine:
             for pos in mine:
                 if any(k == pos.strategy and sg.direction == -pos.direction for k, sg in signals):
                     self._close(pos, "opposite signal")
+
+        if self.s.ai_confirm and signals:
+            if view is None:
+                if not self.s.ai_fallback_allow:
+                    self._note(sym, ', '.join(k for k, _ in signals), 'SKIPPED',
+                               f"AI confirmation required but unavailable ({ai_err})")
+                    return
+            else:
+                agreed = [(k, sg) for k, sg in signals if k == 'ai_analyst' or
+                          (view['direction'] == sg.direction and view['confidence'] >= self.s.ai_min_conf)]
+                for k, sg in signals:
+                    if (k, sg) not in agreed:
+                        self._note(sym, k, 'SKIPPED', f"{'BUY' if sg.direction == 1 else 'SELL'} not confirmed by AI "
+                                                      f"({view['verdict']} {view['confidence']:.0f}%)")
+                signals = agreed
 
         lead = combine_signals(signals, self.s.min_votes)
         if lead is None:
@@ -1960,6 +2763,22 @@ def sidebar(running, connected, account):
                                     format_func=lambda k: STRATEGIES[k].name)
         min_votes = st.slider("Strategies that must agree", 1, 4, saved.min_votes, disabled=lock,
                               help="1 = any single strategy can open a trade. Higher = confluence only.")
+        with st.expander("AI analysis (OpenRouter)", expanded='ai_analyst' in strategies):
+            st.caption("Add **AI analyst** to the rule sets above to let an LLM vote BUY/SELL on each closed candle, "
+                       "and/or require AI confirmation for every rule entry. One API call per symbol per candle.")
+            if not os.environ.get("OPENROUTER_API_KEY"):
+                st.text_input("OpenRouter API key", type="password", key="openrouter_key",
+                              help="Or put OPENROUTER_API_KEY=... in a .env file next to app.py. Kept only for this session.")
+            ai_model = st.text_input("AI model", saved.ai_model, disabled=lock,
+                                     help="Any OpenRouter model id, e.g. openai/gpt-4o, openai/gpt-4o-mini, "
+                                          "anthropic/claude-sonnet-4.5.")
+            ai_min_conf = st.slider("Min AI confidence", 0, 100, saved.ai_min_conf, disabled=lock,
+                                    help="AI calls below this are treated as HOLD, and do not confirm rule signals.")
+            ai_confirm = st.checkbox("Every rule entry must be confirmed by the AI", saved.ai_confirm, disabled=lock)
+            ai_fallback = st.checkbox("If the AI call fails, trade on the rules alone", saved.ai_fallback_allow,
+                                      disabled=lock or not ai_confirm)
+            if ('ai_analyst' in strategies or ai_confirm) and not openrouter_key():
+                st.warning("No OpenRouter key - AI analysis can't run.")
 
         with st.expander("Risk limits", expanded=True):
             risk_pct = st.slider("Risk per trade (% of equity)", 0.1, 2.0, saved.risk_pct, 0.05, disabled=lock)
@@ -1967,7 +2786,6 @@ def sidebar(running, connected, account):
                                      disabled=lock, help="Small accounts: when the risk-sized lot is below the broker "
                                                          "minimum, the minimum lot is used only if it stays under this.")
             daily_loss_pct = st.slider("Daily loss limit (% of day-start balance)", 0.5, 10.0, saved.daily_loss_pct, 0.5, disabled=lock)
-            max_daily_trades = st.number_input("Max trades per day", 1, 200, saved.max_daily_trades, disabled=lock)
             max_consec_losses = st.number_input("Stop for the day after N losses in a row (0 = off)", 0, 20, saved.max_consec_losses, disabled=lock)
             max_positions = st.number_input("Max open positions", 1, 20, saved.max_positions, disabled=lock)
             max_per_symbol = st.number_input("Max per symbol", 1, 5, saved.max_per_symbol, disabled=lock)
@@ -2014,12 +2832,14 @@ def sidebar(running, connected, account):
         symbols=symbols, timeframe=timeframe, htf=htf, bars=saved.bars, strategies=strategies, min_votes=min_votes,
         use_htf_filter=use_htf, mode=saved.mode, risk_pct=risk_pct, max_risk_pct=max(max_risk_pct, risk_pct),
         max_positions=int(max_positions), max_per_symbol=int(max_per_symbol), max_per_currency=int(max_per_currency),
-        daily_loss_pct=daily_loss_pct, max_daily_trades=int(max_daily_trades), max_consec_losses=int(max_consec_losses),
+        daily_loss_pct=daily_loss_pct, max_consec_losses=int(max_consec_losses),
         cooldown_bars=int(cooldown_bars), rr=rr, min_rr=min_rr, use_strategy_target=use_target, min_sl_atr=min_sl_atr,
         max_sl_atr=max_sl_atr, max_spread_frac=max_spread_frac, be_at_r=be_at_r, trail_atr=trail_atr,
         trail_start_r=trail_start_r, max_bars_held=int(max_bars_held), quick_profit=quick_profit,
         reenter_in_range=reenter, max_reentries=int(max_reentries),
-        exit_on_opposite=exit_on_opposite, session_start=session_start, session_end=session_end,
+        exit_on_opposite=exit_on_opposite, ai_model=ai_model.strip() or DEFAULT_AI_MODEL,
+        ai_min_conf=int(ai_min_conf), ai_confirm=ai_confirm, ai_fallback_allow=ai_fallback,
+        session_start=session_start, session_end=session_end,
         friday_close_hour=friday_hour if friday else -1, poll_seconds=saved.poll_seconds, deviation=saved.deviation,
     )
     return s
@@ -2063,6 +2883,8 @@ def controls(runtime, s, connected, account):
             problems.append("pick at least one strategy")
         if live and not armed:
             problems.append("arm live trading")
+        if ('ai_analyst' in s.strategies or s.ai_confirm) and not openrouter_key():
+            problems.append("add an OpenRouter API key for AI analysis (sidebar > AI analysis)")
         if st.button("Start bot", type="primary", disabled=bool(problems), width="stretch"):
             s.mode = 'live' if live else 'paper'
             s.save()
@@ -2133,7 +2955,8 @@ def live_panel(runtime):
     rows = [{'symbol': sym, 'last closed bar': v.get('bar', ''), 'close': v.get('close'),
              'HTF trend': {1: 'up', -1: 'down', 0: 'flat'}.get(v.get('htf_trend'), ''),
              'signals on that bar': ', '.join(v.get('signals', [])) or v.get('note', '-'),
-             'dropped by HTF filter': len(v.get('filtered', []))} for sym, v in snap['symbol_state'].items()]
+             'dropped by HTF filter': len(v.get('filtered', [])),
+             'AI view': v.get('ai', '-')} for sym, v in snap['symbol_state'].items()]
     if rows:
         st.dataframe(pd.DataFrame(rows), hide_index=True, width="stretch")
 
@@ -2149,6 +2972,9 @@ def tab_scanner(s, connected):
     if not connected:
         st.info("Connect MT5 to scan.")
         return
+    key = openrouter_key()
+    use_ai = st.checkbox("Include AI analysis (one OpenRouter call per symbol)", value=bool(key), disabled=not key,
+                         help=None if key else "Add an OpenRouter key in the sidebar > AI analysis.")
     if st.button("Scan now", width="stretch"):
         results = {}
         for name in s.symbols:
@@ -2159,8 +2985,28 @@ def tab_scanner(s, connected):
             d = add_indicators(df)
             htf_df = fetch_bars(sym, s.htf, 300) if s.use_htf_filter else None
             htf = map_htf_to_ltf(d['time'], s.timeframe, htf_df, s.htf) if s.use_htf_filter else np.zeros(len(d), dtype=int)
-            signals, filtered = evaluate_signals(to_arrays(d), len(d) - 1, s.strategies, htf[-1], s.use_htf_filter)
-            results[sym] = {'d': d, 'htf': htf, 'signals': signals, 'filtered': filtered}
+            A = to_arrays(d)
+            signals, filtered = evaluate_signals(A, len(d) - 1, s.strategies, htf[-1], s.use_htf_filter)
+            info = mt('symbol_info', sym)
+            results[sym] = {'d': d, 'htf': htf, 'signals': signals, 'filtered': filtered, 'A': A,
+                            'digits': int(getattr(info, 'digits', 5) or 5)}
+        if use_ai and results:
+            from concurrent.futures import ThreadPoolExecutor
+            with st.spinner(f"Asking {s.ai_model} about {len(results)} symbol(s)..."), \
+                    ThreadPoolExecutor(max_workers=4) as pool:
+                futures = {sym: pool.submit(analyze_bars_ai, sym, s.timeframe, r['A'], len(r['d']) - 1,
+                                            int(r['htf'][-1]), r['signals'], s.ai_model, key, s.ai_min_conf,
+                                            r['digits'])
+                           for sym, r in results.items()}
+                for sym, fut in futures.items():
+                    view, err = fut.result()
+                    results[sym]['ai'] = ai_view_text(view, err)
+                    if view and view['signal']:
+                        sg = view['signal']
+                        results[sym]['ai'] += f" (SL {sg.sl:.{results[sym]['digits']}f}" + (
+                            f", TP {sg.tp:.{results[sym]['digits']}f})" if sg.tp else ")")
+        for r in results.values():
+            r.pop('A', None)
         st.session_state['scan'] = results
     scan = st.session_state.get('scan')
     if not scan:
@@ -2169,7 +3015,8 @@ def tab_scanner(s, connected):
               'HTF trend': {1: 'up', -1: 'down', 0: 'flat'}[int(r['htf'][-1])],
               'signals': '; '.join(f"{'BUY' if sg.direction == 1 else 'SELL'} - {STRATEGIES[k].name}: {sg.reason}"
                                    for k, sg in r['signals']) or '-',
-              'dropped by HTF filter': '; '.join(r['filtered']) or '-'} for sym, r in scan.items()]
+              'dropped by HTF filter': '; '.join(r['filtered']) or '-',
+              'AI analysis': r.get('ai', '-')} for sym, r in scan.items()]
     st.dataframe(pd.DataFrame(table), hide_index=True, width="stretch")
     sym = st.selectbox("Chart", list(scan))
     r = scan[sym]
@@ -2208,8 +3055,12 @@ def tab_backtest(s, connected):
                 df['time'] = pd.to_datetime(df['time'])
                 label = upload.name
                 source_ready = True
-    if not s.strategies:
-        st.warning("Pick at least one strategy in the sidebar.")
+    if 'ai_analyst' in s.strategies or s.ai_confirm:
+        st.info("The AI analyst / AI confirmation is not backtested: it would cost one API call per historical bar, "
+                "and an LLM may already know how past prices moved, which would make the results look better than "
+                "they really are. The backtest runs the rule sets only - judge the AI in paper mode.")
+    if not [k for k in s.strategies if STRATEGIES[k].fn is not None]:
+        st.warning("Pick at least one rule-based strategy in the sidebar.")
         return
     if st.button("Run backtest", type="primary", disabled=not source_ready, width="stretch"):
         with st.spinner("Backtesting..."):
@@ -2326,7 +3177,8 @@ def main():
                "analyzer tab does). Not financial advice - backtest, then paper, then demo, before any real money.")
 
     s = sidebar(running, connected, account)
-    tabs = st.tabs(["Dashboard", "Scanner", "Chart analyzer", "Backtest", "Journal", "Strategy library"])
+    tabs = st.tabs(["Dashboard", "Scanner", "Chart analyzer", "Backtest", "Journal", "Strategy library",
+                    "⚡ Tick Scalper"])
     with tabs[0]:
         controls(runtime, s, connected, account)
         st.divider()
@@ -2341,6 +3193,8 @@ def main():
         tab_journal()
     with tabs[5]:
         tab_library()
+    with tabs[6]:
+        tab_tick_scalper()
 
 
 if __name__ == "__main__":
